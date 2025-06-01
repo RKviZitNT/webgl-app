@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>The Game</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        
+    </style>
+</head>
+<body>
+    <div id="main_menu" class="screen visible">
+        <h1>THE GAME</h1>
+        <button class="menu-btn" onclick="window.createLobby()">Create Lobby</button>
+        <button class="menu-btn" onclick="showScreen('lobby_connect')">Join Lobby</button>
+        <div class="version">v0.1</div>
+    </div>
+
+    <div id="lobby" class="screen">
+        <div class="back-btn" onclick="window.leaveLobby()">←</div>
+        
+        <div class="lobby-info">
+            <div id="lobby_code" onclick="copyLobbyCode()">Loading...</div>
+            <div id="room_status">Status: Connecting...</div>
+        </div>
+
+        <button id="start_button" class="menu-btn" onclick="window.startGame()">Start Match</button>
+    </div>
+
+    <div id="lobby_connect" class="screen">
+        <div class="back-btn" onclick="showScreen('main_menu')">←</div>
+        <input type="text" id="room_code" class="code-input" placeholder="Enter code">
+        <button class="menu-btn" onclick="window.joinLobby()">Connect</button>
+    </div>
+    
+    <div id="game_screen" class="screen">
+        <canvas id="game_canvas"></canvas>
+    </div>
+
+    <script src="wasm_exec.js"></script>
+    <script>
+        const go = new Go();
+        WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject)
+            .then((result) => go.run(result.instance));
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(el => {
+                el.classList.remove('visible');
+            });
+            document.getElementById(screenId).classList.add('visible');
+        }
+
+        function copyLobbyCode() {
+            const cpsc = 'Copied!'
+            const codeElement = document.getElementById('lobby_code');
+            const code = codeElement.textContent;
+            
+            if (code != cpsc) {
+                navigator.clipboard.writeText(code).then(() => {
+                    const originalText = codeElement.textContent;
+                    codeElement.textContent = cpsc;
+                    setTimeout(() => {
+                        codeElement.textContent = originalText;
+                    }, 1000);
+                }).catch(err => {
+                    console.error('Failed to copy code:', err);
+                });
+            }
+            
+        }
+
+        function updateOwnerControls(isOwner) {
+            const startBtn = document.getElementById('start_button');
+            startBtn.style.display = isOwner ? 'block' : 'none';
+        }
+
+        function switchStartButtonState(isEnabled) {
+            const startBtn = document.getElementById('start_button');
+            startBtn.disabled = !isEnabled;
+            
+            if (!isEnabled) {
+                startBtn.classList.add('disabled');
+            } else {
+                startBtn.classList.remove('disabled');
+            }
+        }
+
+        function resizeCanvas() {
+            const canvas = document.getElementById('game_canvas');
+            if (!canvas) return;
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+    </script>
+</body>
+</html>

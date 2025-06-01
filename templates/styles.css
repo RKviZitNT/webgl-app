@@ -1,0 +1,173 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: #121212;
+    color: #f0f0f0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+}
+
+.screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 500px;
+    padding: 20px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: auto;
+}
+
+.screen.visible {
+    display: flex;
+}
+
+h1 {
+    font-size: 3.5rem;
+    margin: 40px 0;
+    color: #9c4dcc;
+    text-align: center;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.menu-btn {
+    background-color: #4a235a;
+    color: #f0f0f0;
+    border: 2px solid #6a3480;
+    border-radius: 6px;
+    padding: 14px 28px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin: 15px 0;
+    width: 250px;
+    max-width: 100%;
+    transition: background-color 0.2s, border-color 0.2s;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.menu-btn:hover {
+    background-color: #5b2c6f;
+    border-color: #7d3c98;
+}
+
+.menu-btn:active {
+    background-color: #3d1e4c;
+}
+
+.menu-btn.disabled {
+    background-color: #2c1936;
+    border-color: #4a235a;
+    color: #7a7a7a;
+    cursor: not-allowed;
+}
+
+.back-btn {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    font-size: 2rem;
+    cursor: pointer;
+    color: #9c4dcc;
+    font-weight: bold;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+}
+
+.back-btn:hover {
+    background-color: rgba(156, 77, 204, 0.2);
+}
+
+.code-input {
+    background-color: #1e1e1e;
+    color: #f0f0f0;
+    border: 2px solid #4a235a;
+    border-radius: 6px;
+    padding: 14px 20px;
+    font-size: 1.2rem;
+    margin: 30px 0;
+    width: 250px;
+    max-width: 100%;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    outline: none;
+}
+
+.code-input:focus {
+    border-color: #9c4dcc;
+}
+
+.lobby-info {
+    background-color: #1e1e1e;
+    border: 2px solid #4a235a;
+    border-radius: 6px;
+    padding: 20px;
+    margin: 40px 0;
+    width: 100%;
+    text-align: center;
+}
+
+#lobby_code {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #9c4dcc;
+    margin: 15px 0;
+    cursor: pointer;
+    letter-spacing: 5px;
+    padding: 10px;
+    transition: background-color 0.2s;
+}
+
+#lobby_code:hover {
+    color: rgb(200, 120, 255);
+}
+
+#room_status {
+    font-size: 1.1rem;
+    color: #b0b0b0;
+    margin-top: 10px;
+}
+
+.version {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    font-size: 0.9rem;
+    color: #6a3480;
+}
+
+#start_button {
+    display: none;
+}
+
+#game_canvas {
+    width: 100vw;
+    height: 100vh;
+    display: block;
+    background: #0a0a0a;
+}
