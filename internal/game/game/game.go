@@ -11,11 +11,13 @@ import (
 )
 
 type Game struct {
-	ctx        js.Value
+	gl         js.Value
 	socket     *js.Value
 	canvas     js.Value
 	keys       map[string]bool
 	characters map[string]*character.Character
+	program    js.Value
+	position   js.Value
 }
 
 var (
@@ -33,36 +35,62 @@ func NewGame(sk *js.Value, chars map[string]*character.Character) *Game {
 	canvas.Set("width", Width)
 	canvas.Set("height", Height)
 
-	ctx := canvas.Call("getContext", "2d")
+	gl := canvas.Call("getContext", "webgl")
+	if gl.IsNull() {
+		panic("WebGL not supported")
+	}
 
+	vertexShaderSource := `
+        attribute vec2 a_position;
+        uniform vec2 u_resolution;
+
+        void main() {
+            vec2 zeroToOne = a_position / u_resolution;
+            vec2 zeroToTwo = zeroToOne * 2.0;
+            vec2 clipSpace = zeroToTwo - 1.0;
+
+            gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+        }
+    `
+
+	fragmentShaderSource := `
+        precision mediump float;
+        void main() {
+            gl_FragColor = vec4(0, 0, 1, 1); // blue
+        }
+    `
+
+	program := createProgram(gl, vertexShaderSource, fragmentShaderSource)
+	gl.Call("useProgram", program)
+
+	positionLocation := gl.Call("getAttribLocation", program, "a_position")
 	return &Game{
-		ctx:        ctx,
+		gl:         gl,
 		socket:     sk,
 		canvas:     canvas,
 		keys:       make(map[string]bool),
 		characters: chars,
+		program:    program,
+		position:   positionLocation,
 	}
 }
 
 func (g *Game) Start(playerId string) {
 	PlayerId = playerId
-	// Подписка на клавиши (пример)
+
 	js.Global().Call("addEventListener", "keydown", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		key := args[0].Get("key").String()
 		g.keys[key] = true
 		return nil
 	}))
-
 	js.Global().Call("addEventListener", "keyup", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		key := args[0].Get("key").String()
 		g.keys[key] = false
 		return nil
 	}))
 
-	// Игровой цикл
 	var renderFrame js.Func
 	renderFrame = js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		js.Global().Call("resizeCanvas")
 		g.Update()
 		g.sendPlayerState()
 		g.Draw()
@@ -73,29 +101,56 @@ func (g *Game) Start(playerId string) {
 }
 
 func (g *Game) Update() {
-	// Движение игрока (пример)
 	if g.keys["ArrowRight"] {
-		g.characters[PlayerId].HitBox.Move(primitives.Vec2{X: 1, Y: 0})
+		g.characters[PlayerId].HitBox.Move(primitives.Vec2{X: 2, Y: 0})
 	}
 	if g.keys["ArrowLeft"] {
-		g.characters[PlayerId].HitBox.Move(primitives.Vec2{X: -1, Y: 0})
+		g.characters[PlayerId].HitBox.Move(primitives.Vec2{X: -2, Y: 0})
 	}
 	if g.keys["ArrowUp"] {
-		g.characters[PlayerId].HitBox.Move(primitives.Vec2{X: 0, Y: -1})
+		g.characters[PlayerId].HitBox.Move(primitives.Vec2{X: 0, Y: -2})
 	}
 	if g.keys["ArrowDown"] {
-		g.characters[PlayerId].HitBox.Move(primitives.Vec2{X: 0, Y: 1})
+		g.characters[PlayerId].HitBox.Move(primitives.Vec2{X: 0, Y: 2})
 	}
 }
 
 func (g *Game) Draw() {
-	// Очистка экрана
-	g.ctx.Call("clearRect", 0, 0, g.canvas.Get("width"), g.canvas.Get("height"))
+	gl := g.gl
+	gl.Call("viewport", 0, 0, int(Width), int(Height))
+	gl.Call("clearColor", 0.9, 0.9, 0.9, 1.0)
+	gl.Call("clear", gl.Get("COLOR_BUFFER_BIT"))
 
-	// Рисуем игрока (квадрат)
-	g.ctx.Set("fillStyle", "blue")
-	for id, _ := range g.characters {
-		g.ctx.Call("fillRect", g.characters[id].HitBox.Pos.X, g.characters[id].HitBox.Pos.Y, 50, 50)
+	resLoc := gl.Call("getUniformLocation", g.program, "u_resolution")
+	gl.Call("uniform2f", resLoc, Width, Height)
+
+	for _, c := range g.characters {
+		x := float32(c.HitBox.Pos.X)
+		y := float32(c.HitBox.Pos.Y)
+		size := float32(50.0)
+
+		vertices := []float32{
+			x, y,
+			x + size, y,
+			x, y + size,
+			x, y + size,
+			x + size, y,
+			x + size, y + size,
+		}
+
+		buffer := gl.Call("createBuffer")
+		gl.Call("bindBuffer", gl.Get("ARRAY_BUFFER"), buffer)
+
+		jsVertices := js.Global().Get("Float32Array").New(len(vertices))
+		for i, v := range vertices {
+			jsVertices.SetIndex(i, v)
+		}
+		gl.Call("bufferData", gl.Get("ARRAY_BUFFER"), jsVertices, gl.Get("STATIC_DRAW"))
+
+		gl.Call("enableVertexAttribArray", g.position)
+		gl.Call("vertexAttribPointer", g.position, 2, gl.Get("FLOAT"), false, 0, 0)
+
+		gl.Call("drawArrays", gl.Get("TRIANGLES"), 0, 6)
 	}
 }
 
@@ -118,4 +173,31 @@ func (g *Game) sendPlayerState() {
 
 func (g *Game) UpdatePlayersData(playerState message.PlayerState) {
 	g.characters[playerState.Id] = &playerState.Data
+}
+
+func createProgram(gl js.Value, vertexSource, fragmentSource string) js.Value {
+	vertexShader := compileShader(gl, gl.Get("VERTEX_SHADER"), vertexSource)
+	fragmentShader := compileShader(gl, gl.Get("FRAGMENT_SHADER"), fragmentSource)
+
+	program := gl.Call("createProgram")
+	gl.Call("attachShader", program, vertexShader)
+	gl.Call("attachShader", program, fragmentShader)
+	gl.Call("linkProgram", program)
+
+	if !gl.Call("getProgramParameter", program, gl.Get("LINK_STATUS")).Bool() {
+		println("Could not link shader program")
+	}
+
+	return program
+}
+
+func compileShader(gl js.Value, shaderType js.Value, source string) js.Value {
+	shader := gl.Call("createShader", shaderType)
+	gl.Call("shaderSource", shader, source)
+	gl.Call("compileShader", shader)
+
+	if !gl.Call("getShaderParameter", shader, gl.Get("COMPILE_STATUS")).Bool() {
+		println("Shader compile failed:", gl.Call("getShaderInfoLog", shader).String())
+	}
+	return shader
 }
