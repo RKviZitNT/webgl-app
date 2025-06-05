@@ -5,6 +5,7 @@ package clienthandler
 import (
 	"syscall/js"
 	"webgl-app/internal/game/game"
+	"webgl-app/internal/game/graphics"
 	"webgl-app/internal/net/message"
 	"webgl-app/internal/net/player"
 	"webgl-app/internal/net/room"
@@ -28,6 +29,10 @@ func RegisterCallbacks() {
 	connectWebSocket()
 
 	<-c
+}
+
+func InitGame(GLCtx *graphics.GLContext) {
+	gm = game.NewGame(&socket, GLCtx)
 }
 
 func connectWebSocket() {

@@ -5,7 +5,6 @@ package clienthandler
 import (
 	"encoding/json"
 	"syscall/js"
-	"webgl-app/internal/game/game"
 	"webgl-app/internal/net/message"
 	"webgl-app/internal/net/utils"
 )
@@ -67,8 +66,7 @@ func handleStartGame(data interface{}) {
 	var gameData message.StartGameData
 	utils.ReadStruct(data, &gameData)
 
-	gm = game.NewGame(&socket, gameData.Data)
-	gm.Start(playerInfo.ID)
+	gm.Start(playerInfo.ID, gameData.Data)
 }
 
 func handleUpdateRoomInfo(data interface{}) {
