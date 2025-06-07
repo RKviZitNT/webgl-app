@@ -1,7 +1,7 @@
 package character
 
 import (
-	"webgl-app/internal/game/primitives"
+	"webgl-app/internal/graphics/primitives"
 )
 
 type Character struct {

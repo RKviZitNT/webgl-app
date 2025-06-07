@@ -2,7 +2,7 @@ package wshandler
 
 import (
 	"webgl-app/internal/game/character"
-	"webgl-app/internal/game/primitives"
+	"webgl-app/internal/graphics/primitives"
 	"webgl-app/internal/net/message"
 	"webgl-app/internal/net/player"
 	"webgl-app/internal/net/room"

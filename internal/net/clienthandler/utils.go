@@ -47,5 +47,7 @@ func updateUi() {
 		} else {
 			js.Global().Call("switchStartButtonState", false)
 		}
+	} else {
+		js.Global().Call("updateOwnerControls", false)
 	}
 }

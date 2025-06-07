@@ -3,14 +3,15 @@
 package main
 
 import (
-	"webgl-app/internal/game/graphics"
+	"syscall/js"
+	"webgl-app/internal/graphics/webgl"
 	"webgl-app/internal/net/clienthandler"
 )
 
 func main() {
-	GLContext, err := graphics.InitWebGL("game_canvas")
+	GLContext, err := webgl.InitWebGL("game_canvas")
 	if err != nil {
-		println(err)
+		js.Global().Get("console").Call("error", err.Error())
 		return
 	}
 

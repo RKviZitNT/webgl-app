@@ -1,14 +1,20 @@
 //go:build js
 
-package graphics
+package webgl
 
 import (
 	"syscall/js"
+	"webgl-app/internal/resourcemanager"
 )
 
 type GLContext struct {
 	GL js.Value
 }
+
+var (
+	VertexShaderSrc   string
+	FragmentShaderSrc string
+)
 
 func InitWebGL(canvasID string) (*GLContext, error) {
 	document := js.Global().Get("document")
@@ -19,6 +25,13 @@ func InitWebGL(canvasID string) (*GLContext, error) {
 		return nil, js.Error{Value: js.ValueOf("WebGL not supported")}
 	}
 
-	LoadShaders()
+	done := make(chan struct{})
+	go func() {
+		VertexShaderSrc = resourcemanager.LoadShader("shaders/vertex.glsl")
+		FragmentShaderSrc = resourcemanager.LoadShader("shaders/fragment.glsl")
+		close(done)
+	}()
+	<-done
+
 	return &GLContext{GL: gl}, nil
 }

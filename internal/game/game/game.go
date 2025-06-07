@@ -6,15 +6,15 @@ import (
 	"encoding/json"
 	"syscall/js"
 	"webgl-app/internal/game/character"
-	"webgl-app/internal/game/graphics"
-	"webgl-app/internal/game/primitives"
+	"webgl-app/internal/graphics/primitives"
+	"webgl-app/internal/graphics/webgl"
 	"webgl-app/internal/net/message"
 )
 
 type Game struct {
 	canvas       js.Value
 	socket       *js.Value
-	glCtx        *graphics.GLContext
+	glCtx        *webgl.GLContext
 	gl           js.Value
 	program      js.Value
 	vertexBuffer js.Value
@@ -26,6 +26,9 @@ var (
 	PlayerId string
 	Width    float64
 	Height   float64
+
+	Direction primitives.Vec2
+	Speed     float64
 )
 
 var vertices = []float32{
@@ -40,7 +43,7 @@ var indeces = []uint16{
 	2, 3, 0,
 }
 
-func NewGame(socket *js.Value, glCtx *graphics.GLContext) *Game {
+func NewGame(socket *js.Value, glCtx *webgl.GLContext) *Game {
 	document := js.Global().Get("document")
 	canvas := document.Call("getElementById", "game_canvas")
 
@@ -60,37 +63,40 @@ func NewGame(socket *js.Value, glCtx *graphics.GLContext) *Game {
 
 func (g *Game) Start(playerId string, chars map[string]*character.Character) error {
 	PlayerId = playerId
+	Speed = 2
 	g.characters = chars
 
 	js.Global().Call("addEventListener", "keydown", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		key := args[0].Get("key").String()
-		g.keys[key] = true
+		code := args[0].Get("code").String()
+		g.keys[code] = true
+
 		return nil
 	}))
 	js.Global().Call("addEventListener", "keyup", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		key := args[0].Get("key").String()
-		g.keys[key] = false
+		code := args[0].Get("code").String()
+		g.keys[code] = false
+
 		return nil
 	}))
 
 	gl := g.gl
 
-	vShader, err := graphics.CompileShader(gl, graphics.VertexShaderSrc, gl.Get("VERTEX_SHADER"))
+	vShader, err := webgl.CompileShader(gl, webgl.VertexShaderSrc, gl.Get("VERTEX_SHADER"))
 	if err != nil {
 		return err
 	}
-	fShader, err := graphics.CompileShader(gl, graphics.FragmentShaderSrc, gl.Get("FRAGMENT_SHADER"))
+	fShader, err := webgl.CompileShader(gl, webgl.FragmentShaderSrc, gl.Get("FRAGMENT_SHADER"))
 	if err != nil {
 		return err
 	}
 
-	program, err := graphics.CreateProgram(gl, vShader, fShader)
+	program, err := webgl.CreateProgram(gl, vShader, fShader)
 	if err != nil {
 		return err
 	}
 	g.program = program
 
-	g.vertexBuffer = graphics.CreateBuffer(gl, vertices, gl.Get("STATIC_DRAW"))
+	g.vertexBuffer = webgl.CreateBuffer(gl, vertices, gl.Get("STATIC_DRAW"))
 
 	popsitionAttrib := gl.Call("getAttribLocation", program, "a_position")
 	gl.Call("enableVertexAttribArray", popsitionAttrib)
@@ -115,18 +121,23 @@ func (g *Game) renderLoop() {
 }
 
 func (g *Game) update() {
-	if g.keys["ArrowRight"] || g.keys["d"] {
-		g.characters[PlayerId].HitBox.Move(primitives.Vec2{X: 2, Y: 0})
+	Direction = *primitives.NewVec2(0, 0)
+
+	if g.keys["ArrowRight"] || g.keys["KeyD"] {
+		Direction.AddVec2(*primitives.NewVec2(1, 0))
 	}
-	if g.keys["ArrowLeft"] || g.keys["a"] {
-		g.characters[PlayerId].HitBox.Move(primitives.Vec2{X: -2, Y: 0})
+	if g.keys["ArrowLeft"] || g.keys["KeyA"] {
+		Direction.AddVec2(*primitives.NewVec2(-1, 0))
 	}
-	if g.keys["ArrowUp"] || g.keys["w"] {
-		g.characters[PlayerId].HitBox.Move(primitives.Vec2{X: 0, Y: -2})
+	if g.keys["ArrowUp"] || g.keys["KeyW"] {
+		Direction.AddVec2(*primitives.NewVec2(0, -1))
 	}
-	if g.keys["ArrowDown"] || g.keys["s"] {
-		g.characters[PlayerId].HitBox.Move(primitives.Vec2{X: 0, Y: 2})
+	if g.keys["ArrowDown"] || g.keys["KeyS"] {
+		Direction.AddVec2(*primitives.NewVec2(0, 1))
 	}
+
+	Direction.MulValue(Speed)
+	g.characters[PlayerId].HitBox.Move(Direction.Normalize())
 }
 
 func (g *Game) draw() {
