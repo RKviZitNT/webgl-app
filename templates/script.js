@@ -59,14 +59,14 @@ async function loadShader(path) {
 
 async function loadImage(path) {
     try {
-        const img = new Image();
-        img.src = path;
+        const image = new Image();
+        image.src = path;
         await new Promise((resolve, reject) => {
-            img.onload = resolve
-            img.onerror = () => reject(new Error(`Failed to load image: ${path}`))
+            image.onload = resolve;
+            image.onerror = () => reject(new Error(`Failed to load image: ${path}`));
         });
-        return img
-    } catch(error) {
+        return image;
+    } catch (error) {
         console.error("Image load error:", error);
         throw error;
     }

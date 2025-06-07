@@ -25,13 +25,31 @@ func InitWebGL(canvasID string) (*GLContext, error) {
 		return nil, js.Error{Value: js.ValueOf("WebGL not supported")}
 	}
 
-	done := make(chan struct{})
-	go func() {
-		VertexShaderSrc = resourcemanager.LoadShader("shaders/vertex.glsl")
-		FragmentShaderSrc = resourcemanager.LoadShader("shaders/fragment.glsl")
-		close(done)
-	}()
-	<-done
+	// done := make(chan struct{})
+	// go func() {
+	// 	VertexShaderSrc = resourcemanager.LoadShader("shaders/vertex.glsl")
+	// 	FragmentShaderSrc = resourcemanager.LoadShader("shaders/fragment.glsl")
+	// 	close(done)
+	// }()
+	// <-done
+
+	resourcemanager.LoadShader("shaders/vertex.glsl",
+		func(src string) {
+			VertexShaderSrc = src
+			println("Vertex shader loaded. Size:", len(VertexShaderSrc))
+		},
+		func(err error) {
+			println("Ошибка загрузки vertex.glsl:", err.Error())
+		})
+
+	resourcemanager.LoadShader("shaders/fragment.glsl",
+		func(src string) {
+			FragmentShaderSrc = src
+			println("Fragment shader loaded. Size:", len(FragmentShaderSrc))
+		},
+		func(err error) {
+			println("Ошибка загрузки fragment.glsl:", err.Error())
+		})
 
 	return &GLContext{GL: gl}, nil
 }

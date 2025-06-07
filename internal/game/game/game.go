@@ -9,6 +9,7 @@ import (
 	"webgl-app/internal/graphics/primitives"
 	"webgl-app/internal/graphics/webgl"
 	"webgl-app/internal/net/message"
+	"webgl-app/internal/resourcemanager"
 )
 
 type Game struct {
@@ -18,8 +19,10 @@ type Game struct {
 	gl           js.Value
 	program      js.Value
 	vertexBuffer js.Value
+	bgBuffer     js.Value
 	keys         map[string]bool
 	characters   map[string]*character.Character
+	texture      js.Value
 }
 
 var (
@@ -41,6 +44,14 @@ var vertices = []float32{
 var indeces = []uint16{
 	0, 1, 2,
 	2, 3, 0,
+}
+
+var quadVertices = []float32{
+	// x, y,    u, v
+	0, 0, 0, 0,
+	100, 0, 1, 0,
+	0, 100, 0, 1,
+	100, 100, 1, 1,
 }
 
 func NewGame(socket *js.Value, glCtx *webgl.GLContext) *Game {
@@ -81,6 +92,14 @@ func (g *Game) Start(playerId string, chars map[string]*character.Character) err
 
 	gl := g.gl
 
+	resourcemanager.LoadImage("assets/images/backgrounds/background1.jpg",
+		func(img js.Value) {
+			g.texture = webgl.CreateTexture(gl, img)
+		},
+		func(err error) {
+			println("Load texture error:", err.Error())
+		})
+
 	vShader, err := webgl.CompileShader(gl, webgl.VertexShaderSrc, gl.Get("VERTEX_SHADER"))
 	if err != nil {
 		return err
@@ -96,6 +115,13 @@ func (g *Game) Start(playerId string, chars map[string]*character.Character) err
 	}
 	g.program = program
 
+	bgVertices := []float32{
+		0, 0, 0, 0,
+		float32(Width), 0, 1, 0,
+		0, float32(Height), 0, 1,
+		float32(Width), float32(Height), 1, 1,
+	}
+	g.bgBuffer = webgl.CreateBuffer(gl, bgVertices, gl.Get("STATIC_DRAW"))
 	g.vertexBuffer = webgl.CreateBuffer(gl, vertices, gl.Get("STATIC_DRAW"))
 
 	popsitionAttrib := gl.Call("getAttribLocation", program, "a_position")
@@ -148,8 +174,10 @@ func (g *Game) draw() {
 	gl.Call("clear", gl.Get("COLOR_BUFFER_BIT"))
 
 	gl.Call("useProgram", g.program)
-	gl.Call("bindBuffer", gl.Get("ARRAY_BUFFER"), g.vertexBuffer)
 
+	g.renderTexture()
+
+	gl.Call("bindBuffer", gl.Get("ARRAY_BUFFER"), g.vertexBuffer)
 	for _, char := range g.characters {
 		offsetLoc := gl.Call("getUniformLocation", g.program, "u_offset")
 		gl.Call("uniform2f", offsetLoc, char.HitBox.Pos.X/Width*2-1, -(char.HitBox.Pos.Y/Height*2 - 1))
@@ -176,4 +204,32 @@ func (g *Game) sendPlayerState() {
 
 func (g *Game) UpdatePlayersData(playerState message.PlayerState) {
 	g.characters[playerState.Id] = &playerState.Data
+}
+
+func (g *Game) renderTexture() {
+	gl := g.gl
+	if g.texture.IsNull() {
+		return
+	}
+
+	positionAttrib := gl.Call("getAttribLocation", g.program, "a_position")
+	texCoordAttrib := gl.Call("getAttribLocation", g.program, "a_texCoord")
+	resUniform := gl.Call("getUniformLocation", g.program, "u_resolution")
+	texUniform := gl.Call("getUniformLocation", g.program, "u_texture")
+
+	gl.Call("bindBuffer", gl.Get("ARRAY_BUFFER"), g.bgBuffer)
+
+	gl.Call("vertexAttribPointer", positionAttrib, 2, gl.Get("FLOAT"), false, 16, 0)
+	gl.Call("enableVertexAttribArray", positionAttrib)
+
+	gl.Call("vertexAttribPointer", texCoordAttrib, 2, gl.Get("FLOAT"), false, 16, 8)
+	gl.Call("enableVertexAttribArray", texCoordAttrib)
+
+	gl.Call("uniform2f", resUniform, Width, Height)
+
+	gl.Call("activeTexture", gl.Get("TEXTURE0"))
+	gl.Call("bindTexture", gl.Get("TEXTURE_2D"), g.texture)
+	gl.Call("uniform1i", texUniform, 0)
+
+	gl.Call("drawArrays", gl.Get("TRIANGLE_STRIP"), 0, 4)
 }

@@ -6,6 +6,7 @@ build: build-server build-client
 	cp -v "$(shell go env GOROOT)/misc/wasm/wasm_exec.js" build/static/
 	cp -v templates/* build/static
 	cp -r shaders build/static
+	cp -r assets build/static
 
 build-client:
 	@echo "Building WebAssembly client..."

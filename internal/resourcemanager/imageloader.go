@@ -2,21 +2,69 @@
 
 package resourcemanager
 
-import "syscall/js"
+import (
+	"errors"
+	"syscall/js"
+)
 
-func LoadImage(path string) js.Value {
-	ch := make(chan js.Value, 1)
-
+func LoadImage(path string, onSuccess ImageCallback, onError ErrorCallback) {
 	promise := js.Global().Call("loadImage", path)
+
 	promise.Call("then", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		ch <- args[0]
-		return nil
-	}))
-	promise.Call("catch", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		println("Image load error:", args[0].Get("message").String())
-		ch <- js.Null()
+		onSuccess(args[0])
 		return nil
 	}))
 
-	return <-ch
+	promise.Call("catch", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		onError(errors.New(args[0].Get("message").String()))
+		return nil
+	}))
 }
+
+func LoadImages(paths []string, onSuccess ImageCallback, onError ErrorCallback, onProgress ProgressCallback) {
+	total := len(paths)
+	loaded := 0
+	loadErrors := 0
+
+	for _, path := range paths {
+		promise := js.Global().Call("loadImage", path)
+
+		promise.Call("then", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+			loaded++
+			if onProgress != nil {
+				onProgress(total, loaded, loadErrors)
+			}
+			if onSuccess != nil {
+				onSuccess(args[0])
+			}
+			return nil
+		}))
+
+		promise.Call("catch", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+			if onProgress != nil {
+				onProgress(total, loaded, loadErrors)
+			}
+			if onError != nil {
+				onError(errors.New(args[0].Get("message").String()))
+			}
+			return nil
+		}))
+	}
+}
+
+// func LoadImage(path string) js.Value {
+// 	ch := make(chan js.Value, 1)
+
+// 	promise := js.Global().Call("loadImage", path)
+// 	promise.Call("then", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+// 		ch <- args[0]
+// 		return nil
+// 	}))
+// 	promise.Call("catch", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+// 		println("Image load error:", args[0].Get("message").String())
+// 		ch <- js.Null()
+// 		return nil
+// 	}))
+
+// 	return <-ch
+// }
