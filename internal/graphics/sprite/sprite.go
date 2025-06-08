@@ -3,7 +3,6 @@
 package sprite
 
 import (
-	"syscall/js"
 	"webgl-app/internal/graphics/primitives"
 	"webgl-app/internal/graphics/texture"
 	"webgl-app/internal/graphics/webgl"
@@ -21,7 +20,7 @@ func NewSprite(texture *texture.Texture, rect primitives.Rect) *Sprite {
 	}
 }
 
-func (s *Sprite) Draw(gl js.Value, program js.Value, pos primitives.Vec2, canvasSize primitives.Vec2) {
+func (s *Sprite) Draw(glCtx *webgl.GLContext, pos primitives.Vec2) {
 	if s.Texture == nil {
 		println("Draw error: texture is nil")
 		return
@@ -32,6 +31,9 @@ func (s *Sprite) Draw(gl js.Value, program js.Value, pos primitives.Vec2, canvas
 		println("Draw error: texture not loaded")
 		return
 	}
+
+	gl := glCtx.GL
+	program := glCtx.Program
 
 	gl.Call("useProgram", program)
 
@@ -68,7 +70,7 @@ func (s *Sprite) Draw(gl js.Value, program js.Value, pos primitives.Vec2, canvas
 	gl.Call("enableVertexAttribArray", texAttrib)
 
 	resUniform := gl.Call("getUniformLocation", program, "u_resolution")
-	gl.Call("uniform2f", resUniform, canvasSize.X, canvasSize.Y)
+	gl.Call("uniform2f", resUniform, glCtx.CanvasSize.X, glCtx.CanvasSize.Y)
 
 	gl.Call("activeTexture", gl.Get("TEXTURE0"))
 	gl.Call("bindTexture", gl.Get("TEXTURE_2D"), *texture)

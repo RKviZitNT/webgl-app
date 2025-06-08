@@ -15,15 +15,10 @@ import (
 )
 
 type Game struct {
-	canvas       js.Value
-	socket       *js.Value
-	glCtx        *webgl.GLContext
-	gl           js.Value
-	program      js.Value
-	vertexBuffer js.Value
-	bgBuffer     js.Value
-	keys         map[string]bool
-	characters   map[string]*character.Character
+	socket     *js.Value
+	glCtx      *webgl.GLContext
+	keys       map[string]bool
+	characters map[string]*character.Character
 
 	texture *texture.Texture
 	sprite  *sprite.Sprite
@@ -31,47 +26,15 @@ type Game struct {
 
 var (
 	PlayerId string
-	Width    float64
-	Height   float64
 
 	Direction primitives.Vec2
 	Speed     float64
 )
 
-var vertices = []float32{
-	-0.5, -0.5,
-	0.5, -0.5,
-	0.5, 0.5,
-	-0.5, 0.5,
-}
-
-var indeces = []uint16{
-	0, 1, 2,
-	2, 3, 0,
-}
-
-var quadVertices = []float32{
-	// x, y,    u, v
-	0, 0, 0, 0,
-	100, 0, 1, 0,
-	0, 100, 0, 1,
-	100, 100, 1, 1,
-}
-
 func NewGame(socket *js.Value, glCtx *webgl.GLContext) *Game {
-	document := js.Global().Get("document")
-	canvas := document.Call("getElementById", "game_canvas")
-
-	Width = js.Global().Get("innerWidth").Float()
-	Height = js.Global().Get("innerHeight").Float()
-	canvas.Set("width", Width)
-	canvas.Set("height", Height)
-
 	return &Game{
-		canvas: canvas,
 		socket: socket,
 		glCtx:  glCtx,
-		gl:     glCtx.GL,
 		keys:   make(map[string]bool),
 	}
 }
@@ -94,44 +57,14 @@ func (g *Game) Start(playerId string, chars map[string]*character.Character) err
 		return nil
 	}))
 
-	gl := g.gl
-
 	resourcemanager.LoadImage("assets/sprites/warrior/spritesheet.png",
 		func(img js.Value) {
-			g.texture = texture.NewTexture(gl, img)
+			g.texture = texture.NewTexture(g.glCtx.GL, img)
 			g.sprite = sprite.NewSprite(g.texture, primitives.NewRect(primitives.NewVec2(0, 0), primitives.NewVec2(69, 44)))
 		},
 		func(err error) {
 			println("Load texture error:", err.Error())
 		})
-
-	vShader, err := webgl.CompileShader(gl, webgl.VertexShaderSrc, gl.Get("VERTEX_SHADER"))
-	if err != nil {
-		return err
-	}
-	fShader, err := webgl.CompileShader(gl, webgl.FragmentShaderSrc, gl.Get("FRAGMENT_SHADER"))
-	if err != nil {
-		return err
-	}
-
-	program, err := webgl.CreateProgram(gl, vShader, fShader)
-	if err != nil {
-		return err
-	}
-	g.program = program
-
-	bgVertices := []float32{
-		0, 0, 0, 0,
-		float32(Width), 0, 1, 0,
-		0, float32(Height), 0, 1,
-		float32(Width), float32(Height), 1, 1,
-	}
-	g.bgBuffer = webgl.CreateBuffer(gl, bgVertices, gl.Get("STATIC_DRAW"))
-	g.vertexBuffer = webgl.CreateBuffer(gl, vertices, gl.Get("STATIC_DRAW"))
-
-	popsitionAttrib := gl.Call("getAttribLocation", program, "a_position")
-	gl.Call("enableVertexAttribArray", popsitionAttrib)
-	gl.Call("vertexAttribPointer", popsitionAttrib, 2, gl.Get("FLOAT"), false, 0, 0)
 
 	g.renderLoop()
 	return nil
@@ -172,23 +105,16 @@ func (g *Game) update() {
 }
 
 func (g *Game) draw() {
-	gl := g.gl
+	gl := g.glCtx.GL
 
-	gl.Call("viewport", 0, 0, int(Width), int(Height))
+	gl.Call("viewport", 0, 0, g.glCtx.CanvasSize.X, g.glCtx.CanvasSize.Y)
 	gl.Call("clearColor", 0.9, 0.9, 0.9, 1.0)
 	gl.Call("clear", gl.Get("COLOR_BUFFER_BIT"))
 
-	gl.Call("useProgram", g.program)
+	gl.Call("useProgram", g.glCtx.Program)
 
 	if g.sprite != nil {
-		g.sprite.Draw(gl, g.program, primitives.NewVec2(200, 500), primitives.NewVec2(Width, Height))
-	}
-
-	gl.Call("bindBuffer", gl.Get("ARRAY_BUFFER"), g.vertexBuffer)
-	for _, char := range g.characters {
-		offsetLoc := gl.Call("getUniformLocation", g.program, "u_offset")
-		gl.Call("uniform2f", offsetLoc, char.HitBox.Pos.X/Width*2-1, -(char.HitBox.Pos.Y/Height*2 - 1))
-		gl.Call("drawArrays", gl.Get("TRIANGLE_FAN"), 0, 4)
+		g.sprite.Draw(g.glCtx, primitives.NewVec2(200, 500))
 	}
 }
 

@@ -26,7 +26,11 @@ func RegisterCallbacks() {
 	js.Global().Set("leaveLobby", js.FuncOf(leaveLobby))
 	js.Global().Set("startGame", js.FuncOf(startGame))
 
+	js.Global().Call("setLoadingProgress", 100, "Connecting to server...")
 	connectWebSocket()
+
+	js.Global().Call("showScreen", "main_menu")
+	js.Global().Call("setLoadingProgress", 0, "")
 
 	<-c
 }

@@ -9,7 +9,7 @@
     </style>
 </head>
 <body>
-    <div id="main_menu" class="screen visible">
+    <div id="main_menu" class="screen">
         <h1>THE GAME</h1>
         <button class="menu-btn" onclick="window.createLobby()">Create Lobby</button>
         <button class="menu-btn" onclick="showScreen('lobby_connect')">Join Lobby</button>
@@ -34,9 +34,9 @@
         <button class="menu-btn" onclick="window.joinLobby()">Connect</button>
     </div>
     
-    <div id="loading_screen" class="screen">
+    <div id="loading_screen" class="screen visible">
         <div class="loading-spinner"></div>
-        <div class="loading-text">Loading assets...</div>
+        <div id="loading_status" class="loading-text"></div>
         <div class="loading-progress">
             <div id="loading_bar" class="loading-progress-bar"></div>
         </div>

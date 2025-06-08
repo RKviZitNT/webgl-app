@@ -3,53 +3,102 @@
 package webgl
 
 import (
+	"fmt"
 	"syscall/js"
+	"webgl-app/internal/graphics/primitives"
 	"webgl-app/internal/resourcemanager"
 )
 
 type GLContext struct {
-	GL js.Value
+	Canvas     js.Value
+	CanvasSize primitives.Vec2
+	GL         js.Value
+	Program    js.Value
 }
-
-var (
-	VertexShaderSrc   string
-	FragmentShaderSrc string
-)
 
 func InitWebGL(canvasID string) (*GLContext, error) {
 	document := js.Global().Get("document")
 	canvas := document.Call("getElementById", canvasID)
 
+	width := js.Global().Get("innerWidth").Float()
+	height := js.Global().Get("innerHeight").Float()
+	canvas.Set("width", width)
+	canvas.Set("height", height)
+
 	gl := canvas.Call("getContext", "webgl")
 	if gl.IsNull() {
-		return nil, js.Error{Value: js.ValueOf("WebGL not supported")}
+		gl = canvas.Call("getContext", "experimental-webgl")
+		if gl.IsNull() {
+			return nil, fmt.Errorf("WebGL not supported")
+		}
 	}
 
-	// done := make(chan struct{})
-	// go func() {
-	// 	VertexShaderSrc = resourcemanager.LoadShader("shaders/vertex.glsl")
-	// 	FragmentShaderSrc = resourcemanager.LoadShader("shaders/fragment.glsl")
-	// 	close(done)
-	// }()
-	// <-done
+	shaderLoaded := make(chan bool, 1)
+	var loadErr error
+	var vertexSrc, fragmentSrc string
 
+	js.Global().Call("setLoadingProgress", 0, "Loading vertex shader...")
 	resourcemanager.LoadFile("shaders/vertex.glsl",
 		func(src string) {
-			VertexShaderSrc = src
-			println("Vertex shader loaded. Size:", len(VertexShaderSrc))
+			vertexSrc = src
+			shaderLoaded <- true
 		},
 		func(err error) {
-			println("Loading error vertex.glsl:", err.Error())
+			loadErr = err
+			shaderLoaded <- false
 		})
 
+	if !<-shaderLoaded {
+		return nil, fmt.Errorf("failed to load vertex shader: %v", loadErr)
+	} else {
+		println("Vertex shader loaded. Size:", len(vertexSrc))
+	}
+
+	js.Global().Call("setLoadingProgress", 20, "Loading fragment shader...")
 	resourcemanager.LoadFile("shaders/fragment.glsl",
 		func(src string) {
-			FragmentShaderSrc = src
-			println("Fragment shader loaded. Size:", len(FragmentShaderSrc))
+			fragmentSrc = src
+			shaderLoaded <- true
 		},
 		func(err error) {
-			println("Loading error fragment.glsl:", err.Error())
+			loadErr = err
+			shaderLoaded <- false
 		})
 
-	return &GLContext{GL: gl}, nil
+	if !<-shaderLoaded {
+		return nil, fmt.Errorf("failed to load fragment shader: %v", loadErr)
+	} else {
+		println("Fragment shader loaded. Size:", len(fragmentSrc))
+	}
+
+	js.Global().Call("setLoadingProgress", 40, "Compiling vertex shader...")
+	vShader, err := CompileShader(gl, vertexSrc, gl.Get("VERTEX_SHADER"))
+	if err != nil {
+		return nil, fmt.Errorf("vertex shader compilation failed: %v", err)
+	} else {
+		println("Vertext shader compiled")
+	}
+
+	js.Global().Call("setLoadingProgress", 60, "Compiling vertex shader...")
+	fShader, err := CompileShader(gl, fragmentSrc, gl.Get("FRAGMENT_SHADER"))
+	if err != nil {
+		return nil, fmt.Errorf("fragment shader compilation failed: %v", err)
+	} else {
+		println("Fragment shader compiled")
+	}
+
+	js.Global().Call("setLoadingProgress", 80, "Creating program...")
+	program, err := CreateProgram(gl, vShader, fShader)
+	if err != nil {
+		return nil, fmt.Errorf("program creation failed: %v", err)
+	} else {
+		println("Program created")
+	}
+
+	return &GLContext{
+		Canvas:     canvas,
+		CanvasSize: primitives.NewVec2(width, height),
+		GL:         gl,
+		Program:    program,
+	}, nil
 }
