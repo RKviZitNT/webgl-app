@@ -4,6 +4,7 @@ package game
 
 import (
 	"encoding/json"
+	"fmt"
 	"syscall/js"
 	"webgl-app/internal/game/character"
 	"webgl-app/internal/graphics/primitives"
@@ -20,6 +21,7 @@ type Game struct {
 	keys       map[string]bool
 	characters map[string]*character.Character
 
+	backg   *texture.Texture
 	texture *texture.Texture
 	sprite  *sprite.Sprite
 }
@@ -63,7 +65,14 @@ func (g *Game) Start(playerId string, chars map[string]*character.Character) err
 			g.sprite = sprite.NewSprite(g.texture, primitives.NewRect(primitives.NewVec2(0, 0), primitives.NewVec2(69, 44)))
 		},
 		func(err error) {
-			println("Load texture error:", err.Error())
+			js.Global().Get("console").Call("error", fmt.Sprint("Load texture error:", err.Error()))
+		})
+	resourcemanager.LoadImage("assets/images/backgrounds/background1.jpg",
+		func(img js.Value) {
+			g.backg = texture.NewTexture(g.glCtx.GL, img)
+		},
+		func(err error) {
+			js.Global().Get("console").Call("error", fmt.Sprint("Load texture error:", err.Error()))
 		})
 
 	g.renderLoop()
@@ -107,14 +116,17 @@ func (g *Game) update() {
 func (g *Game) draw() {
 	gl := g.glCtx.GL
 
-	gl.Call("viewport", 0, 0, g.glCtx.CanvasSize.X, g.glCtx.CanvasSize.Y)
+	gl.Call("viewport", 0, 0, g.glCtx.CanvasRect.Width(), g.glCtx.CanvasRect.Height())
 	gl.Call("clearColor", 0.9, 0.9, 0.9, 1.0)
 	gl.Call("clear", gl.Get("COLOR_BUFFER_BIT"))
 
 	gl.Call("useProgram", g.glCtx.Program)
 
+	if g.backg != nil {
+		g.glCtx.DrawTexture(g.backg, g.glCtx.CanvasRect)
+	}
 	if g.sprite != nil {
-		g.sprite.Draw(g.glCtx, primitives.NewVec2(200, 500))
+		g.glCtx.DrawSprite(g.sprite, primitives.NewVec2(200, 500), 5)
 	}
 }
 
@@ -129,7 +141,7 @@ func (g *Game) sendPlayerState() {
 
 	jsonData, err := json.Marshal(msg)
 	if err != nil {
-		println("JSON error:", err.Error())
+		js.Global().Get("console").Call("error", fmt.Sprint("JSON error:", err.Error()))
 		return
 	}
 	g.socket.Call("send", string(jsonData))

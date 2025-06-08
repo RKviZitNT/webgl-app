@@ -30,7 +30,6 @@ func RegisterCallbacks() {
 	connectWebSocket()
 
 	js.Global().Call("showScreen", "main_menu")
-	js.Global().Call("setLoadingProgress", 0, "")
 
 	<-c
 }
@@ -43,7 +42,7 @@ func connectWebSocket() {
 	socket = js.Global().Get("WebSocket").New("ws://localhost:8080/ws")
 
 	socket.Set("onopen", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		println("WebSocket connected")
+		js.Global().Get("console").Call("log", "WebSocket connected")
 		return nil
 	}))
 
@@ -55,7 +54,7 @@ func connectWebSocket() {
 	}))
 
 	socket.Set("onerror", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		println("WebSocket error")
+		js.Global().Get("console").Call("errror", "WebSocket error")
 		return nil
 	}))
 }

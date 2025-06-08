@@ -15,7 +15,7 @@ type Texture struct {
 
 func NewTexture(gl js.Value, image js.Value) *Texture {
 	if image.IsUndefined() || image.IsNull() {
-		println("NewTexture: image is undefined or null")
+		js.Global().Get("console").Call("error", "NewTexture: image is undefined or null")
 		return nil
 	}
 

@@ -4,6 +4,7 @@ package clienthandler
 
 import (
 	"encoding/json"
+	"fmt"
 	"syscall/js"
 	"webgl-app/internal/net/message"
 	"webgl-app/internal/net/utils"
@@ -12,7 +13,7 @@ import (
 func handleServerMessage(raw string) {
 	var msg message.Message
 	if err := json.Unmarshal([]byte(raw), &msg); err != nil {
-		println("Failed to parse message: ", err.Error())
+		js.Global().Get("console").Call("error", fmt.Sprint("Failed to parse message: ", err.Error()))
 		return
 	}
 
@@ -40,7 +41,7 @@ func handleServerMessage(raw string) {
 	case message.ErrorMsg:
 		handleError(msg.Data)
 	default:
-		println("Unknown message type: ", msg.Type)
+		js.Global().Get("console").Call("error", fmt.Sprint("Unknown message type: ", msg.Type))
 	}
 }
 
@@ -71,7 +72,7 @@ func handleStartGame(data interface{}) {
 
 func handleUpdateRoomInfo(data interface{}) {
 	if err := utils.ReadStruct(data, &roomInfo); err != nil {
-		println(err)
+		js.Global().Get("console").Call("error", err.Error())
 		return
 	}
 
@@ -80,7 +81,7 @@ func handleUpdateRoomInfo(data interface{}) {
 
 func handleUpdatePlayerInfo(data interface{}) {
 	if err := utils.ReadStruct(data, &playerInfo); err != nil {
-		println(err)
+		js.Global().Get("console").Call("error", err.Error())
 		return
 	}
 

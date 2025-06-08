@@ -31,7 +31,7 @@ func sendUpdatePlayerInfoMsg() {
 func sendMessage(msg message.Message) {
 	jsonData, err := json.Marshal(msg)
 	if err != nil {
-		println("JSON error:", err.Error())
+		js.Global().Get("console").Call("error", fmt.Sprint("JSON error:", err.Error()))
 		return
 	}
 	socket.Call("send", string(jsonData))

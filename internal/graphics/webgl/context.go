@@ -11,12 +11,12 @@ import (
 
 type GLContext struct {
 	Canvas     js.Value
-	CanvasSize primitives.Vec2
+	CanvasRect primitives.Rect
 	GL         js.Value
 	Program    js.Value
 }
 
-func InitWebGL(canvasID string) (*GLContext, error) {
+func NewWebGLCtx(canvasID string) (*GLContext, error) {
 	document := js.Global().Get("document")
 	canvas := document.Call("getElementById", canvasID)
 
@@ -32,6 +32,16 @@ func InitWebGL(canvasID string) (*GLContext, error) {
 			return nil, fmt.Errorf("WebGL not supported")
 		}
 	}
+
+	return &GLContext{
+		Canvas:     canvas,
+		CanvasRect: primitives.NewRect(primitives.NewVec2(0, 0), primitives.NewVec2(width, height)),
+		GL:         gl,
+	}, nil
+}
+
+func (ctx *GLContext) InitWebGL() error {
+	gl := ctx.GL
 
 	shaderLoaded := make(chan bool, 1)
 	var loadErr error
@@ -49,9 +59,9 @@ func InitWebGL(canvasID string) (*GLContext, error) {
 		})
 
 	if !<-shaderLoaded {
-		return nil, fmt.Errorf("failed to load vertex shader: %v", loadErr)
+		return fmt.Errorf("failed to load vertex shader: %v", loadErr)
 	} else {
-		println("Vertex shader loaded. Size:", len(vertexSrc))
+		js.Global().Get("console").Call("log", "Vertex shader loaded")
 	}
 
 	js.Global().Call("setLoadingProgress", 20, "Loading fragment shader...")
@@ -66,39 +76,34 @@ func InitWebGL(canvasID string) (*GLContext, error) {
 		})
 
 	if !<-shaderLoaded {
-		return nil, fmt.Errorf("failed to load fragment shader: %v", loadErr)
+		return fmt.Errorf("failed to load fragment shader: %v", loadErr)
 	} else {
-		println("Fragment shader loaded. Size:", len(fragmentSrc))
+		js.Global().Get("console").Call("log", "Fragment shader loaded")
 	}
 
 	js.Global().Call("setLoadingProgress", 40, "Compiling vertex shader...")
-	vShader, err := CompileShader(gl, vertexSrc, gl.Get("VERTEX_SHADER"))
+	vShader, err := ctx.CompileShader(vertexSrc, gl.Get("VERTEX_SHADER"))
 	if err != nil {
-		return nil, fmt.Errorf("vertex shader compilation failed: %v", err)
+		return fmt.Errorf("vertex shader compilation failed: %v", err)
 	} else {
-		println("Vertext shader compiled")
+		js.Global().Get("console").Call("log", "Vertext shader compiled")
 	}
 
 	js.Global().Call("setLoadingProgress", 60, "Compiling vertex shader...")
-	fShader, err := CompileShader(gl, fragmentSrc, gl.Get("FRAGMENT_SHADER"))
+	fShader, err := ctx.CompileShader(fragmentSrc, gl.Get("FRAGMENT_SHADER"))
 	if err != nil {
-		return nil, fmt.Errorf("fragment shader compilation failed: %v", err)
+		return fmt.Errorf("fragment shader compilation failed: %v", err)
 	} else {
-		println("Fragment shader compiled")
+		js.Global().Get("console").Call("log", "Fragment shader compiled")
 	}
 
 	js.Global().Call("setLoadingProgress", 80, "Creating program...")
-	program, err := CreateProgram(gl, vShader, fShader)
+	ctx.Program, err = ctx.CreateProgram(vShader, fShader)
 	if err != nil {
-		return nil, fmt.Errorf("program creation failed: %v", err)
+		return fmt.Errorf("program creation failed: %v", err)
 	} else {
-		println("Program created")
+		js.Global().Get("console").Call("log", "Program created")
 	}
 
-	return &GLContext{
-		Canvas:     canvas,
-		CanvasSize: primitives.NewVec2(width, height),
-		GL:         gl,
-		Program:    program,
-	}, nil
+	return nil
 }
