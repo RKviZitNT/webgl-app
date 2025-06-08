@@ -46,13 +46,23 @@ function resizeCanvas() {
     canvas.height = window.innerHeight;
 }
 
-async function loadShader(path) {
+function setLoadingProgress(progress, message) {
+    const loadingBar = document.getElementById('loading_bar');
+    const loadingStatus = document.getElementById('loading_status');
+    
+    progress = Math.max(0, Math.min(100, progress));
+    loadingBar.style.width = progress + '%';
+    
+    loadingStatus.textContent = message;
+}
+
+async function loadFile(path) {
     try {
-        const shader = await fetch(path);
-        if (!shader.ok) throw new Error(`HTTP error! status: ${shader.status}`);
-        return await shader.text();
+        const result = await fetch(path);
+        if (!result.ok) throw new Error(`HTTP error! status: ${result.status}`);
+        return await result.text();
     } catch (error) {
-        console.error("Error loading shaders:", error);
+        console.error("Error loading file:", error);
         throw error;
     }
 }

@@ -6,8 +6,8 @@ type Vec2 struct {
 	X, Y float64
 }
 
-func NewVec2(x, y float64) *Vec2 {
-	return &Vec2{
+func NewVec2(x, y float64) Vec2 {
+	return Vec2{
 		X: x,
 		Y: y,
 	}

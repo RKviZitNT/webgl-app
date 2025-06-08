@@ -22,6 +22,7 @@
         <div class="lobby-info">
             <div id="lobby_code" onclick="copyLobbyCode()">Loading...</div>
             <div id="room_status">Status: Connecting...</div>
+            <div id="players_count">Players: <span id="current_players">0</span>/<span id="max_players">0</span></div>
         </div>
 
         <button id="start_button" class="menu-btn" onclick="window.startGame()">Start Game</button>
@@ -33,6 +34,14 @@
         <button class="menu-btn" onclick="window.joinLobby()">Connect</button>
     </div>
     
+    <div id="loading_screen" class="screen">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading assets...</div>
+        <div class="loading-progress">
+            <div id="loading_bar" class="loading-progress-bar"></div>
+        </div>
+    </div>
+
     <div id="game_screen" class="screen">
         <canvas id="game_canvas"></canvas>
     </div>

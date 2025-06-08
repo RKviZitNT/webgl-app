@@ -1,4 +1,4 @@
-all: build
+all: build run
 
 build: build-server build-client
 	mkdir -p build/static

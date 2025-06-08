@@ -33,22 +33,22 @@ func InitWebGL(canvasID string) (*GLContext, error) {
 	// }()
 	// <-done
 
-	resourcemanager.LoadShader("shaders/vertex.glsl",
+	resourcemanager.LoadFile("shaders/vertex.glsl",
 		func(src string) {
 			VertexShaderSrc = src
 			println("Vertex shader loaded. Size:", len(VertexShaderSrc))
 		},
 		func(err error) {
-			println("Ошибка загрузки vertex.glsl:", err.Error())
+			println("Loading error vertex.glsl:", err.Error())
 		})
 
-	resourcemanager.LoadShader("shaders/fragment.glsl",
+	resourcemanager.LoadFile("shaders/fragment.glsl",
 		func(src string) {
 			FragmentShaderSrc = src
 			println("Fragment shader loaded. Size:", len(FragmentShaderSrc))
 		},
 		func(err error) {
-			println("Ошибка загрузки fragment.glsl:", err.Error())
+			println("Loading error fragment.glsl:", err.Error())
 		})
 
 	return &GLContext{GL: gl}, nil

@@ -7,6 +7,8 @@ import (
 	"syscall/js"
 	"webgl-app/internal/game/character"
 	"webgl-app/internal/graphics/primitives"
+	"webgl-app/internal/graphics/sprite"
+	"webgl-app/internal/graphics/texture"
 	"webgl-app/internal/graphics/webgl"
 	"webgl-app/internal/net/message"
 	"webgl-app/internal/resourcemanager"
@@ -22,7 +24,9 @@ type Game struct {
 	bgBuffer     js.Value
 	keys         map[string]bool
 	characters   map[string]*character.Character
-	texture      js.Value
+
+	texture *texture.Texture
+	sprite  *sprite.Sprite
 }
 
 var (
@@ -92,9 +96,10 @@ func (g *Game) Start(playerId string, chars map[string]*character.Character) err
 
 	gl := g.gl
 
-	resourcemanager.LoadImage("assets/images/backgrounds/background1.jpg",
+	resourcemanager.LoadImage("assets/sprites/warrior/spritesheet.png",
 		func(img js.Value) {
-			g.texture = webgl.CreateTexture(gl, img)
+			g.texture = texture.NewTexture(gl, img)
+			g.sprite = sprite.NewSprite(g.texture, primitives.NewRect(primitives.NewVec2(0, 0), primitives.NewVec2(69, 44)))
 		},
 		func(err error) {
 			println("Load texture error:", err.Error())
@@ -147,19 +152,19 @@ func (g *Game) renderLoop() {
 }
 
 func (g *Game) update() {
-	Direction = *primitives.NewVec2(0, 0)
+	Direction = primitives.NewVec2(0, 0)
 
 	if g.keys["ArrowRight"] || g.keys["KeyD"] {
-		Direction.AddVec2(*primitives.NewVec2(1, 0))
+		Direction.AddVec2(primitives.NewVec2(1, 0))
 	}
 	if g.keys["ArrowLeft"] || g.keys["KeyA"] {
-		Direction.AddVec2(*primitives.NewVec2(-1, 0))
+		Direction.AddVec2(primitives.NewVec2(-1, 0))
 	}
 	if g.keys["ArrowUp"] || g.keys["KeyW"] {
-		Direction.AddVec2(*primitives.NewVec2(0, -1))
+		Direction.AddVec2(primitives.NewVec2(0, -1))
 	}
 	if g.keys["ArrowDown"] || g.keys["KeyS"] {
-		Direction.AddVec2(*primitives.NewVec2(0, 1))
+		Direction.AddVec2(primitives.NewVec2(0, 1))
 	}
 
 	Direction.MulValue(Speed)
@@ -175,7 +180,9 @@ func (g *Game) draw() {
 
 	gl.Call("useProgram", g.program)
 
-	g.renderTexture()
+	if g.sprite != nil {
+		g.sprite.Draw(gl, g.program, primitives.NewVec2(200, 500), primitives.NewVec2(Width, Height))
+	}
 
 	gl.Call("bindBuffer", gl.Get("ARRAY_BUFFER"), g.vertexBuffer)
 	for _, char := range g.characters {
@@ -204,32 +211,4 @@ func (g *Game) sendPlayerState() {
 
 func (g *Game) UpdatePlayersData(playerState message.PlayerState) {
 	g.characters[playerState.Id] = &playerState.Data
-}
-
-func (g *Game) renderTexture() {
-	gl := g.gl
-	if g.texture.IsNull() {
-		return
-	}
-
-	positionAttrib := gl.Call("getAttribLocation", g.program, "a_position")
-	texCoordAttrib := gl.Call("getAttribLocation", g.program, "a_texCoord")
-	resUniform := gl.Call("getUniformLocation", g.program, "u_resolution")
-	texUniform := gl.Call("getUniformLocation", g.program, "u_texture")
-
-	gl.Call("bindBuffer", gl.Get("ARRAY_BUFFER"), g.bgBuffer)
-
-	gl.Call("vertexAttribPointer", positionAttrib, 2, gl.Get("FLOAT"), false, 16, 0)
-	gl.Call("enableVertexAttribArray", positionAttrib)
-
-	gl.Call("vertexAttribPointer", texCoordAttrib, 2, gl.Get("FLOAT"), false, 16, 8)
-	gl.Call("enableVertexAttribArray", texCoordAttrib)
-
-	gl.Call("uniform2f", resUniform, Width, Height)
-
-	gl.Call("activeTexture", gl.Get("TEXTURE0"))
-	gl.Call("bindTexture", gl.Get("TEXTURE_2D"), g.texture)
-	gl.Call("uniform1i", texUniform, 0)
-
-	gl.Call("drawArrays", gl.Get("TRIANGLE_STRIP"), 0, 4)
 }
