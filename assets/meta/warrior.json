@@ -1,0 +1,39 @@
+{
+    "parameters": {
+        "width": 414,
+        "height": 748,
+        "frame_width_count": 6,
+        "frame_height_count": 17,
+        "all_frame_count": 99
+    },    
+    "animations": {
+        "idle": {
+            "first_frame": 1,
+            "frame_count": 6
+        },
+        "walk": {
+            "first_frame": 7,
+            "frame_count": 8
+        },
+        "attack1": {
+            "first_frame": 15,
+            "frame_count": 8
+        },
+        "attack2": {
+            "first_frame": 23,
+            "frame_count": 4
+        },
+        "death": {
+            "first_frame": 27,
+            "frame_count": 11
+        },
+        "hurt": {
+            "first_frame": 38,
+            "frame_count": 4
+        },
+        "jump": {
+            "first_frame": 42,
+            "frame_count": 8
+        }
+    }
+}

@@ -30,10 +30,11 @@ type Room struct {
 }
 
 type RoomInfo struct {
-	ID       string       `json:"id"`
-	Status   RoomStatus   `json:"status"`
-	OwnerId  string       `json:"owner_id"`
-	Settings RoomSettings `json:"settings"`
+	ID           string       `json:"id"`
+	Status       RoomStatus   `json:"status"`
+	OwnerId      string       `json:"owner_id"`
+	PlayersCount int          `json:"players_count"`
+	Settings     RoomSettings `json:"settings"`
 }
 
 func NewRoom(roomCode string, settings RoomSettings) *Room {
@@ -58,10 +59,11 @@ func (r *Room) RoomInfo() *RoomInfo {
 	defer r.mu.Unlock()
 
 	return &RoomInfo{
-		ID:       r.id,
-		Status:   r.status,
-		OwnerId:  r.ownerID,
-		Settings: r.settings,
+		ID:           r.id,
+		Status:       r.status,
+		OwnerId:      r.ownerID,
+		PlayersCount: len(r.players),
+		Settings:     r.settings,
 	}
 }
 

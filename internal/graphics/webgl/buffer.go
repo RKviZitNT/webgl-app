@@ -1,6 +1,6 @@
 //go:build js
 
-package graphics
+package webgl
 
 import (
 	"syscall/js"

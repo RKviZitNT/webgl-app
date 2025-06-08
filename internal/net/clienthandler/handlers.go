@@ -66,7 +66,7 @@ func handleStartGame(data interface{}) {
 	var gameData message.StartGameData
 	utils.ReadStruct(data, &gameData)
 
-	gm.Start(playerInfo.ID, gameData.Data)
+	go gm.Start(playerInfo.ID, gameData.Data)
 }
 
 func handleUpdateRoomInfo(data interface{}) {

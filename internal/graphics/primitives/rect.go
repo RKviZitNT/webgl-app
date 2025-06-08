@@ -5,6 +5,13 @@ type Rect struct {
 	Size Vec2
 }
 
+func NewRect(pos Vec2, size Vec2) Rect {
+	return Rect{
+		Pos:  pos,
+		Size: size,
+	}
+}
+
 func (r *Rect) Left() float64 {
 	return r.Pos.X
 }
@@ -26,6 +33,14 @@ func (r *Rect) Center() Vec2 {
 		X: r.Pos.X + r.Size.X/2,
 		Y: r.Pos.Y + r.Size.Y/2,
 	}
+}
+
+func (r *Rect) Width() float64 {
+	return r.Size.X
+}
+
+func (r *Rect) Height() float64 {
+	return r.Size.Y
 }
 
 func (r *Rect) Move(offset Vec2) {
