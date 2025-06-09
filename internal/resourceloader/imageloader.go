@@ -1,48 +1,51 @@
 //go:build js
 
-package resourcemanager
+package resourceloader
 
 import (
 	"errors"
 	"syscall/js"
 )
 
-func LoadImage(path string, onSuccess ImageCallback, onError ErrorCallback) {
+func LoadImage(path string, onSuccess imageCallback, onError errorCallback) {
 	promise := js.Global().Call("loadImage", path)
 
 	promise.Call("then", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		onSuccess(args[0])
+		if onSuccess != nil {
+			onSuccess(args[0])
+		}
 		return nil
 	}))
 
 	promise.Call("catch", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		onError(errors.New(args[0].Get("message").String()))
+		if onError != nil {
+			onError(errors.New(args[0].Get("message").String()))
+		}
 		return nil
 	}))
 }
 
-func LoadImages(paths []string, onSuccess ImageCallback, onError ErrorCallback, onProgress ProgressCallback) {
-	total := len(paths)
+func LoadImages(assetsSrc map[string]string, onSuccess imagesCallback, onError errorCallback, onProgress progressCallback) {
+	total := len(assetsSrc)
 	loaded := 0
-	loadErrors := 0
 
-	for _, path := range paths {
+	for name, path := range assetsSrc {
 		promise := js.Global().Call("loadImage", path)
 
 		promise.Call("then", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 			loaded++
 			if onProgress != nil {
-				onProgress(total, loaded, loadErrors)
+				onProgress(total, loaded)
 			}
 			if onSuccess != nil {
-				onSuccess(args[0])
+				onSuccess(name, args[0])
 			}
 			return nil
 		}))
 
 		promise.Call("catch", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 			if onProgress != nil {
-				onProgress(total, loaded, loadErrors)
+				onProgress(total, loaded)
 			}
 			if onError != nil {
 				onError(errors.New(args[0].Get("message").String()))

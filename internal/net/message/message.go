@@ -1,6 +1,6 @@
 package message
 
-import "webgl-app/internal/game/character"
+import "webgl-app/internal/graphics/primitives"
 
 type MessageType string
 
@@ -24,11 +24,26 @@ type Message struct {
 	Data interface{} `json:"data"`
 }
 
-type StartGameData struct {
-	Data map[string]*character.Character
+type PlayerInfo struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
 }
 
-type PlayerState struct {
-	Id   string
-	Data character.Character
+type RoomInfo struct {
+	ID           string `json:"id"`
+	Status       string `json:"status"`
+	OwnerId      string `json:"owner_id"`
+	PlayersCount int    `json:"players_count"`
+	MaxPlayers   int    `json:"max_players"`
+	NeedPlayers  int    `json:"need_players"`
+}
+
+type FighterInfo struct {
+	ID            string
+	CharacterName string
+	Collider      primitives.Rect
+}
+
+type StartGameData struct {
+	FightersInfo []FighterInfo
 }

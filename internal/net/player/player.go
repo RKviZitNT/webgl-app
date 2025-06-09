@@ -16,11 +16,6 @@ type Player struct {
 	mu     sync.RWMutex
 }
 
-type PlayerInfo struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-}
-
 func NewPlayer(conn *websocket.Conn, name string) *Player {
 	return &Player{
 		conn:   conn,
@@ -37,11 +32,11 @@ func (p *Player) ID() string {
 	return p.id
 }
 
-func (p *Player) PlayerInfo() *PlayerInfo {
+func (p *Player) PlayerInfo() *message.PlayerInfo {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	return &PlayerInfo{
+	return &message.PlayerInfo{
 		ID:   p.id,
 		Name: p.name,
 	}

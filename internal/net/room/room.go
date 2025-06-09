@@ -16,8 +16,8 @@ const (
 )
 
 type RoomSettings struct {
-	MaxPlayers  int `json:"max_players"`
-	NeedPlayers int `json:"need_players"`
+	MaxPlayers  int
+	NeedPlayers int
 }
 
 type Room struct {
@@ -27,14 +27,6 @@ type Room struct {
 	players  map[string]*player.Player
 	ownerID  string
 	mu       sync.Mutex
-}
-
-type RoomInfo struct {
-	ID           string       `json:"id"`
-	Status       RoomStatus   `json:"status"`
-	OwnerId      string       `json:"owner_id"`
-	PlayersCount int          `json:"players_count"`
-	Settings     RoomSettings `json:"settings"`
 }
 
 func NewRoom(roomCode string, settings RoomSettings) *Room {
@@ -54,16 +46,17 @@ func (r *Room) ID() string {
 	return r.id
 }
 
-func (r *Room) RoomInfo() *RoomInfo {
+func (r *Room) RoomInfo() *message.RoomInfo {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	return &RoomInfo{
+	return &message.RoomInfo{
 		ID:           r.id,
-		Status:       r.status,
+		Status:       string(r.status),
 		OwnerId:      r.ownerID,
 		PlayersCount: len(r.players),
-		Settings:     r.settings,
+		MaxPlayers:   r.settings.MaxPlayers,
+		NeedPlayers:  r.settings.NeedPlayers,
 	}
 }
 

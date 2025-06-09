@@ -7,14 +7,13 @@ import (
 	"webgl-app/internal/game/game"
 	"webgl-app/internal/graphics/webgl"
 	"webgl-app/internal/net/message"
-	"webgl-app/internal/net/player"
 	"webgl-app/internal/net/room"
 )
 
 var (
 	socket     js.Value
-	roomInfo   room.RoomInfo
-	playerInfo player.PlayerInfo
+	roomInfo   message.RoomInfo
+	playerInfo message.PlayerInfo
 	gm         *game.Game
 )
 
@@ -26,7 +25,10 @@ func RegisterCallbacks() {
 	js.Global().Set("leaveLobby", js.FuncOf(leaveLobby))
 	js.Global().Set("startGame", js.FuncOf(startGame))
 
+	js.Global().Call("setLoadingProgress", 100, "Connecting to server...")
 	connectWebSocket()
+
+	js.Global().Call("showScreen", "main_menu")
 
 	<-c
 }
@@ -39,7 +41,7 @@ func connectWebSocket() {
 	socket = js.Global().Get("WebSocket").New("ws://localhost:8080/ws")
 
 	socket.Set("onopen", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		println("WebSocket connected")
+		js.Global().Get("console").Call("log", "WebSocket connected")
 		return nil
 	}))
 
@@ -51,7 +53,7 @@ func connectWebSocket() {
 	}))
 
 	socket.Set("onerror", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		println("WebSocket error")
+		js.Global().Get("console").Call("errror", "WebSocket error")
 		return nil
 	}))
 }

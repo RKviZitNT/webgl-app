@@ -4,82 +4,44 @@ package game
 
 import (
 	"encoding/json"
+	"fmt"
 	"syscall/js"
+	"webgl-app/internal/assetsmanager"
 	"webgl-app/internal/game/character"
+	"webgl-app/internal/game/fighter"
+	"webgl-app/internal/game/level"
 	"webgl-app/internal/graphics/primitives"
 	"webgl-app/internal/graphics/sprite"
-	"webgl-app/internal/graphics/texture"
 	"webgl-app/internal/graphics/webgl"
 	"webgl-app/internal/net/message"
-	"webgl-app/internal/resourcemanager"
 )
 
 type Game struct {
-	canvas       js.Value
-	socket       *js.Value
-	glCtx        *webgl.GLContext
-	gl           js.Value
-	program      js.Value
-	vertexBuffer js.Value
-	bgBuffer     js.Value
-	keys         map[string]bool
-	characters   map[string]*character.Character
-
-	texture *texture.Texture
-	sprite  *sprite.Sprite
+	socket   *js.Value
+	glCtx    *webgl.GLContext
+	keys     map[string]bool
+	assets   *assetsmanager.AssetsManager
+	level    *level.Level
+	fighters map[string]*fighter.Fighter
 }
 
 var (
-	PlayerId string
-	Width    float64
-	Height   float64
-
+	PlayerId  string
 	Direction primitives.Vec2
 	Speed     float64
 )
 
-var vertices = []float32{
-	-0.5, -0.5,
-	0.5, -0.5,
-	0.5, 0.5,
-	-0.5, 0.5,
-}
-
-var indeces = []uint16{
-	0, 1, 2,
-	2, 3, 0,
-}
-
-var quadVertices = []float32{
-	// x, y,    u, v
-	0, 0, 0, 0,
-	100, 0, 1, 0,
-	0, 100, 0, 1,
-	100, 100, 1, 1,
-}
-
 func NewGame(socket *js.Value, glCtx *webgl.GLContext) *Game {
-	document := js.Global().Get("document")
-	canvas := document.Call("getElementById", "game_canvas")
-
-	Width = js.Global().Get("innerWidth").Float()
-	Height = js.Global().Get("innerHeight").Float()
-	canvas.Set("width", Width)
-	canvas.Set("height", Height)
-
 	return &Game{
-		canvas: canvas,
 		socket: socket,
 		glCtx:  glCtx,
-		gl:     glCtx.GL,
 		keys:   make(map[string]bool),
 	}
 }
 
-func (g *Game) Start(playerId string, chars map[string]*character.Character) error {
+func (g *Game) Start(playerId string, fightersInfo []message.FighterInfo) {
 	PlayerId = playerId
 	Speed = 2
-	g.characters = chars
 
 	js.Global().Call("addEventListener", "keydown", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		code := args[0].Get("code").String()
@@ -94,47 +56,31 @@ func (g *Game) Start(playerId string, chars map[string]*character.Character) err
 		return nil
 	}))
 
-	gl := g.gl
-
-	resourcemanager.LoadImage("assets/sprites/warrior/spritesheet.png",
-		func(img js.Value) {
-			g.texture = texture.NewTexture(gl, img)
-			g.sprite = sprite.NewSprite(g.texture, primitives.NewRect(primitives.NewVec2(0, 0), primitives.NewVec2(69, 44)))
-		},
-		func(err error) {
-			println("Load texture error:", err.Error())
-		})
-
-	vShader, err := webgl.CompileShader(gl, webgl.VertexShaderSrc, gl.Get("VERTEX_SHADER"))
+	g.assets = assetsmanager.NewAssetsManager()
+	js.Global().Call("showScreen", "loading_screen")
+	err := g.assets.Load(g.glCtx, assetsmanager.AssetsSrc)
 	if err != nil {
-		return err
+		g.Stop("Failed to load assets!")
 	}
-	fShader, err := webgl.CompileShader(gl, webgl.FragmentShaderSrc, gl.Get("FRAGMENT_SHADER"))
-	if err != nil {
-		return err
-	}
+	js.Global().Call("showScreen", "game_screen")
 
-	program, err := webgl.CreateProgram(gl, vShader, fShader)
-	if err != nil {
-		return err
-	}
-	g.program = program
+	g.level = level.NewLevel(g.assets.GetTexture("background1"), g.assets.GetTexture("background1"))
 
-	bgVertices := []float32{
-		0, 0, 0, 0,
-		float32(Width), 0, 1, 0,
-		0, float32(Height), 0, 1,
-		float32(Width), float32(Height), 1, 1,
-	}
-	g.bgBuffer = webgl.CreateBuffer(gl, bgVertices, gl.Get("STATIC_DRAW"))
-	g.vertexBuffer = webgl.CreateBuffer(gl, vertices, gl.Get("STATIC_DRAW"))
+	character.Characters = make(map[character.CharacterName]*character.Character)
+	character.Characters[character.Warrior] = character.NewCharacter(character.Warrior, sprite.NewSprite(g.assets.GetTexture(string(character.Warrior)), primitives.NewRect(primitives.NewVec2(0, 0), primitives.NewVec2(69, 44))))
 
-	popsitionAttrib := gl.Call("getAttribLocation", program, "a_position")
-	gl.Call("enableVertexAttribArray", popsitionAttrib)
-	gl.Call("vertexAttribPointer", popsitionAttrib, 2, gl.Get("FLOAT"), false, 0, 0)
+	g.fighters = make(map[string]*fighter.Fighter)
+	for _, fighterInfo := range fightersInfo {
+		g.fighters[fighterInfo.ID] = fighter.NewFighter(fighterInfo.CharacterName, fighterInfo.Collider)
+	}
 
 	g.renderLoop()
-	return nil
+}
+
+func (g *Game) Stop(exitMsg string) {
+	if exitMsg != "" {
+		js.Global().Call("log", exitMsg)
+	}
 }
 
 func (g *Game) renderLoop() {
@@ -168,47 +114,43 @@ func (g *Game) update() {
 	}
 
 	Direction.MulValue(Speed)
-	g.characters[PlayerId].HitBox.Move(Direction.Normalize())
+	g.fighters[PlayerId].Collider.Move(Direction.Normalize())
 }
 
 func (g *Game) draw() {
-	gl := g.gl
+	gl := g.glCtx.GL
 
-	gl.Call("viewport", 0, 0, int(Width), int(Height))
+	gl.Call("viewport", 0, 0, g.glCtx.CanvasRect.Width(), g.glCtx.CanvasRect.Height())
 	gl.Call("clearColor", 0.9, 0.9, 0.9, 1.0)
 	gl.Call("clear", gl.Get("COLOR_BUFFER_BIT"))
 
-	gl.Call("useProgram", g.program)
+	gl.Call("useProgram", g.glCtx.Program)
 
-	if g.sprite != nil {
-		g.sprite.Draw(gl, g.program, primitives.NewVec2(200, 500), primitives.NewVec2(Width, Height))
-	}
+	g.glCtx.DrawTexture(g.level.Background, g.glCtx.CanvasRect)
 
-	gl.Call("bindBuffer", gl.Get("ARRAY_BUFFER"), g.vertexBuffer)
-	for _, char := range g.characters {
-		offsetLoc := gl.Call("getUniformLocation", g.program, "u_offset")
-		gl.Call("uniform2f", offsetLoc, char.HitBox.Pos.X/Width*2-1, -(char.HitBox.Pos.Y/Height*2 - 1))
-		gl.Call("drawArrays", gl.Get("TRIANGLE_FAN"), 0, 4)
+	for _, f := range g.fighters {
+		g.glCtx.DrawSprite(f.Character.Sprite, f.Collider.Pos, 5)
 	}
 }
 
 func (g *Game) sendPlayerState() {
 	msg := message.Message{
 		Type: message.GameStateMsg,
-		Data: message.PlayerState{
-			Id:   PlayerId,
-			Data: *g.characters[PlayerId],
+		Data: message.FighterInfo{
+			ID:            PlayerId,
+			CharacterName: string(character.Warrior),
+			Collider:      g.fighters[PlayerId].Collider,
 		},
 	}
 
 	jsonData, err := json.Marshal(msg)
 	if err != nil {
-		println("JSON error:", err.Error())
+		js.Global().Get("console").Call("error", fmt.Sprint("JSON error:", err.Error()))
 		return
 	}
 	g.socket.Call("send", string(jsonData))
 }
 
-func (g *Game) UpdatePlayersData(playerState message.PlayerState) {
-	g.characters[playerState.Id] = &playerState.Data
+func (g *Game) UpdatePlayersData(fighterInfo message.FighterInfo) {
+	g.fighters[fighterInfo.ID].Collider = fighterInfo.Collider
 }

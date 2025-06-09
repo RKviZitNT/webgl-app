@@ -1,13 +1,13 @@
 //go:build js
 
-package resourcemanager
+package resourceloader
 
 import (
 	"errors"
 	"syscall/js"
 )
 
-func LoadFile(path string, onSuccess FileCallback, onError ErrorCallback) {
+func LoadFile(path string, onSuccess fileCallback, onError errorCallback) {
 	promise := js.Global().Call("loadFile", path)
 
 	promise.Call("then", js.FuncOf(func(this js.Value, args []js.Value) interface{} {

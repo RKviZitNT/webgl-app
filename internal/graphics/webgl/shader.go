@@ -7,7 +7,9 @@ import (
 	"syscall/js"
 )
 
-func CompileShader(gl js.Value, source string, shaderType js.Value) (js.Value, error) {
+func (ctx *GLContext) CompileShader(source string, shaderType js.Value) (js.Value, error) {
+	gl := ctx.GL
+
 	shader := gl.Call("createShader", shaderType)
 	gl.Call("shaderSource", shader, source)
 	gl.Call("compileShader", shader)
