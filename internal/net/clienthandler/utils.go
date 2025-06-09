@@ -41,10 +41,10 @@ func updateUi() {
 	js.Global().Get("document").Call("getElementById", "lobby_code").Set("textContent", roomInfo.ID)
 	js.Global().Get("document").Call("getElementById", "room_status").Set("textContent", fmt.Sprintf("Status: %s", roomInfo.Status))
 	js.Global().Get("document").Call("getElementById", "current_players").Set("textContent", roomInfo.PlayersCount)
-	js.Global().Get("document").Call("getElementById", "max_players").Set("textContent", roomInfo.Settings.MaxPlayers)
+	js.Global().Get("document").Call("getElementById", "max_players").Set("textContent", roomInfo.MaxPlayers)
 	if playerInfo.ID == roomInfo.OwnerId {
 		js.Global().Call("updateOwnerControls", true)
-		if roomInfo.Status == room.Ready {
+		if roomInfo.Status == string(room.Ready) {
 			js.Global().Call("switchStartButtonState", true)
 		} else {
 			js.Global().Call("switchStartButtonState", false)

@@ -1,18 +1,34 @@
+//go:build js
+
 package character
 
 import (
-	"webgl-app/internal/graphics/primitives"
+	"webgl-app/internal/graphics/animation"
+	"webgl-app/internal/graphics/sprite"
+)
+
+type CharacterName string
+
+const (
+	Warrior CharacterName = "warrior"
 )
 
 type Character struct {
-	HitBox primitives.Rect
+	Name       CharacterName
+	Sprite     *sprite.Sprite
+	Animations map[string]*animation.Animation
 }
 
-func NewCharacter(pos primitives.Vec2, size primitives.Vec2) *Character {
+func NewCharacter(name CharacterName, sprite *sprite.Sprite) *Character {
 	return &Character{
-		HitBox: primitives.Rect{
-			Pos:  pos,
-			Size: size,
-		},
+		Name:       name,
+		Sprite:     sprite,
+		Animations: make(map[string]*animation.Animation),
 	}
 }
+
+func (c *Character) AddAnimation(name string, animation *animation.Animation) {
+	c.Animations[name] = animation
+}
+
+var Characters map[CharacterName]*Character

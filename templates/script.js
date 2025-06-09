@@ -1,4 +1,7 @@
 function showScreen(screenId) {
+    if (screenId == "loading_screen") {
+        setLoadingProgress(0, "")
+    }
     document.querySelectorAll('.screen').forEach(el => {
         el.classList.remove('visible');
     });

@@ -7,14 +7,13 @@ import (
 	"webgl-app/internal/game/game"
 	"webgl-app/internal/graphics/webgl"
 	"webgl-app/internal/net/message"
-	"webgl-app/internal/net/player"
 	"webgl-app/internal/net/room"
 )
 
 var (
 	socket     js.Value
-	roomInfo   room.RoomInfo
-	playerInfo player.PlayerInfo
+	roomInfo   message.RoomInfo
+	playerInfo message.PlayerInfo
 	gm         *game.Game
 )
 

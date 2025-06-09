@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"syscall/js"
 	"webgl-app/internal/graphics/primitives"
-	"webgl-app/internal/resourcemanager"
+	"webgl-app/internal/resourceloader"
 )
 
 type GLContext struct {
@@ -48,7 +48,7 @@ func (ctx *GLContext) InitWebGL() error {
 	var vertexSrc, fragmentSrc string
 
 	js.Global().Call("setLoadingProgress", 0, "Loading vertex shader...")
-	resourcemanager.LoadFile("shaders/vertex.glsl",
+	resourceloader.LoadFile("shaders/vertex.glsl",
 		func(src string) {
 			vertexSrc = src
 			shaderLoaded <- true
@@ -65,7 +65,7 @@ func (ctx *GLContext) InitWebGL() error {
 	}
 
 	js.Global().Call("setLoadingProgress", 20, "Loading fragment shader...")
-	resourcemanager.LoadFile("shaders/fragment.glsl",
+	resourceloader.LoadFile("shaders/fragment.glsl",
 		func(src string) {
 			fragmentSrc = src
 			shaderLoaded <- true

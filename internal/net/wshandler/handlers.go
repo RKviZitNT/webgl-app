@@ -1,7 +1,6 @@
 package wshandler
 
 import (
-	"webgl-app/internal/game/character"
 	"webgl-app/internal/graphics/primitives"
 	"webgl-app/internal/net/message"
 	"webgl-app/internal/net/player"
@@ -150,24 +149,33 @@ func (ws *WebSocket) HandleStartGame(player *player.Player) {
 		return
 	}
 
-	ids := make([]string, 0, len(room.GetPlayers()))
+	ids := make([]string, 0, 2)
 	for id := range room.GetPlayers() {
 		ids = append(ids, id)
 	}
-	characters := make(map[string]*character.Character)
-	characters[ids[0]] = character.NewCharacter(
-		primitives.NewVec2(100, 300),
-		primitives.NewVec2(60, 40),
-	)
-	characters[ids[1]] = character.NewCharacter(
-		primitives.NewVec2(500, 300),
-		primitives.NewVec2(60, 40),
-	)
+
+	fightersInfo := make([]message.FighterInfo, 0, len(ids))
+	fightersInfo = append(fightersInfo, message.FighterInfo{
+		ID:            ids[0],
+		CharacterName: "warrior",
+		Collider: primitives.NewRect(
+			primitives.NewVec2(100, 300),
+			primitives.NewVec2(60, 40),
+		),
+	})
+	fightersInfo = append(fightersInfo, message.FighterInfo{
+		ID:            ids[1],
+		CharacterName: "warrior",
+		Collider: primitives.NewRect(
+			primitives.NewVec2(500, 300),
+			primitives.NewVec2(60, 40),
+		),
+	})
 
 	room.Broadcast(message.Message{
 		Type: message.StartGameMsg,
 		Data: message.StartGameData{
-			Data: characters,
+			FightersInfo: fightersInfo,
 		},
 	}, nil)
 }
