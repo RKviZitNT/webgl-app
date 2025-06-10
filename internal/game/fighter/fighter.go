@@ -12,9 +12,9 @@ type Fighter struct {
 	Collider  primitives.Rect
 }
 
-func NewFighter(characterName string, collider primitives.Rect) *Fighter {
+func NewFighter(character *character.Character, collider primitives.Rect) *Fighter {
 	return &Fighter{
-		Character: character.Characters[character.CharacterName(characterName)],
+		Character: character,
 		Collider:  collider,
 	}
 }

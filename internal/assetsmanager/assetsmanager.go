@@ -3,6 +3,7 @@
 package assetsmanager
 
 import (
+	"fmt"
 	"sync"
 	"syscall/js"
 	"webgl-app/internal/graphics/texture"
@@ -33,8 +34,10 @@ func (a *AssetsManager) Load(glCtx *webgl.GLContext, assetsSrc map[string]string
 		wg       sync.WaitGroup
 	)
 
-	wg.Add(len(assetsSrc))
+	total := len(assetsSrc)
+	wg.Add(total)
 
+	js.Global().Call("setLoadingProgress", 10, "Loading assets...")
 	resourceloader.LoadImages(assetsSrc,
 		func(name string, img js.Value) {
 			a.addTexture(name, texture.NewTexture(glCtx.GL, img))
@@ -48,8 +51,9 @@ func (a *AssetsManager) Load(glCtx *webgl.GLContext, assetsSrc map[string]string
 			errMutex.Unlock()
 			wg.Done()
 		},
-		func(total, loaded int) {
-			js.Global().Call("setLoadingProgress", loaded/total*100, "Loading vertex shader...")
+		func(loaded int) {
+			js.Global().Get("console").Call("log", fmt.Sprintf("Loaded %d/%d assets", loaded, total))
+			js.Global().Call("setLoadingProgress", 10+(float64(loaded)/float64(total)*90), "Loading assets...")
 		})
 
 	wg.Wait()

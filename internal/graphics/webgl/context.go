@@ -64,7 +64,7 @@ func (ctx *GLContext) InitWebGL() error {
 		js.Global().Get("console").Call("log", "Vertex shader loaded")
 	}
 
-	js.Global().Call("setLoadingProgress", 20, "Loading fragment shader...")
+	js.Global().Call("setLoadingProgress", 2, "Loading fragment shader...")
 	resourceloader.LoadFile("shaders/fragment.glsl",
 		func(src string) {
 			fragmentSrc = src
@@ -81,7 +81,7 @@ func (ctx *GLContext) InitWebGL() error {
 		js.Global().Get("console").Call("log", "Fragment shader loaded")
 	}
 
-	js.Global().Call("setLoadingProgress", 40, "Compiling vertex shader...")
+	js.Global().Call("setLoadingProgress", 4, "Compiling vertex shader...")
 	vShader, err := ctx.CompileShader(vertexSrc, gl.Get("VERTEX_SHADER"))
 	if err != nil {
 		return fmt.Errorf("vertex shader compilation failed: %v", err)
@@ -89,7 +89,7 @@ func (ctx *GLContext) InitWebGL() error {
 		js.Global().Get("console").Call("log", "Vertext shader compiled")
 	}
 
-	js.Global().Call("setLoadingProgress", 60, "Compiling vertex shader...")
+	js.Global().Call("setLoadingProgress", 6, "Compiling vertex shader...")
 	fShader, err := ctx.CompileShader(fragmentSrc, gl.Get("FRAGMENT_SHADER"))
 	if err != nil {
 		return fmt.Errorf("fragment shader compilation failed: %v", err)
@@ -97,7 +97,7 @@ func (ctx *GLContext) InitWebGL() error {
 		js.Global().Get("console").Call("log", "Fragment shader compiled")
 	}
 
-	js.Global().Call("setLoadingProgress", 80, "Creating program...")
+	js.Global().Call("setLoadingProgress", 8, "Creating program...")
 	ctx.Program, err = ctx.CreateProgram(vShader, fShader)
 	if err != nil {
 		return fmt.Errorf("program creation failed: %v", err)

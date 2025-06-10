@@ -33,8 +33,13 @@ func RegisterCallbacks() {
 	<-c
 }
 
-func InitGame(GLCtx *webgl.GLContext) {
-	gm = game.NewGame(&socket, GLCtx)
+func InitGame(GLCtx *webgl.GLContext) error {
+	var err error
+	gm, err = game.NewGame(&socket, GLCtx)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func connectWebSocket() {
@@ -47,7 +52,7 @@ func connectWebSocket() {
 
 	socket.Set("onmessage", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		msg := args[0].Get("data").String()
-		// println("Received:", msg)
+		//js.Global().Get("console").Call("log", fmt.Sprint("Received:", msg))
 		handleServerMessage(msg)
 		return nil
 	}))

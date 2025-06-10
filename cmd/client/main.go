@@ -14,13 +14,19 @@ func main() {
 		js.Global().Get("console").Call("error", err.Error())
 		return
 	}
+
 	err = GLContext.InitWebGL()
 	if err != nil {
 		js.Global().Get("console").Call("error", err.Error())
 		return
 	}
 
-	clienthandler.InitGame(GLContext)
+	err = clienthandler.InitGame(GLContext)
+	if err != nil {
+		js.Global().Get("console").Call("error", err.Error())
+		return
+	}
+
 	clienthandler.RegisterCallbacks()
 
 	select {}

@@ -17,31 +17,50 @@ import (
 )
 
 type Game struct {
-	socket   *js.Value
-	glCtx    *webgl.GLContext
-	keys     map[string]bool
-	assets   *assetsmanager.AssetsManager
-	level    *level.Level
-	fighters map[string]*fighter.Fighter
+	playerId     string
+	socket       *js.Value
+	glCtx        *webgl.GLContext
+	keys         map[string]bool
+	assets       *assetsmanager.AssetsManager
+	fighters     map[string]*fighter.Fighter
+	characters   map[character.CharacterName]*character.Character
+	levels       map[level.LevelName]*level.Level
+	currentLevel *level.Level
 }
 
 var (
-	PlayerId  string
 	Direction primitives.Vec2
 	Speed     float64
 )
 
-func NewGame(socket *js.Value, glCtx *webgl.GLContext) *Game {
-	return &Game{
-		socket: socket,
-		glCtx:  glCtx,
-		keys:   make(map[string]bool),
+func NewGame(socket *js.Value, glCtx *webgl.GLContext) (*Game, error) {
+	assets := assetsmanager.NewAssetsManager()
+	err := assets.Load(glCtx, assetsmanager.AssetsSrc)
+	if err != nil {
+		return nil, err
 	}
+
+	characters := make(map[character.CharacterName]*character.Character)
+	characters[character.Warrior] = character.NewCharacter(character.Warrior, sprite.NewSprite(assets.GetTexture(string(character.Warrior)), primitives.NewRect(primitives.NewVec2(0, 0), primitives.NewVec2(69, 44))))
+
+	levels := make(map[level.LevelName]*level.Level)
+	levels[level.DefaultLevel] = level.NewLevel(level.DefaultLevel, assets.GetTexture("background1"), assets.GetTexture("background1"))
+
+	return &Game{
+		socket:     socket,
+		glCtx:      glCtx,
+		keys:       make(map[string]bool),
+		assets:     assets,
+		characters: characters,
+		levels:     levels,
+	}, nil
 }
 
 func (g *Game) Start(playerId string, fightersInfo []message.FighterInfo) {
-	PlayerId = playerId
+	g.playerId = playerId
 	Speed = 2
+
+	g.currentLevel = g.levels[level.DefaultLevel]
 
 	js.Global().Call("addEventListener", "keydown", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		code := args[0].Get("code").String()
@@ -56,22 +75,9 @@ func (g *Game) Start(playerId string, fightersInfo []message.FighterInfo) {
 		return nil
 	}))
 
-	g.assets = assetsmanager.NewAssetsManager()
-	js.Global().Call("showScreen", "loading_screen")
-	err := g.assets.Load(g.glCtx, assetsmanager.AssetsSrc)
-	if err != nil {
-		g.Stop("Failed to load assets!")
-	}
-	js.Global().Call("showScreen", "game_screen")
-
-	g.level = level.NewLevel(g.assets.GetTexture("background1"), g.assets.GetTexture("background1"))
-
-	character.Characters = make(map[character.CharacterName]*character.Character)
-	character.Characters[character.Warrior] = character.NewCharacter(character.Warrior, sprite.NewSprite(g.assets.GetTexture(string(character.Warrior)), primitives.NewRect(primitives.NewVec2(0, 0), primitives.NewVec2(69, 44))))
-
 	g.fighters = make(map[string]*fighter.Fighter)
 	for _, fighterInfo := range fightersInfo {
-		g.fighters[fighterInfo.ID] = fighter.NewFighter(fighterInfo.CharacterName, fighterInfo.Collider)
+		g.fighters[fighterInfo.ID] = fighter.NewFighter(g.characters[character.CharacterName(fighterInfo.CharacterName)], fighterInfo.Collider)
 	}
 
 	g.renderLoop()
@@ -114,7 +120,7 @@ func (g *Game) update() {
 	}
 
 	Direction.MulValue(Speed)
-	g.fighters[PlayerId].Collider.Move(Direction.Normalize())
+	g.fighters[g.playerId].Collider.Move(Direction.Normalize())
 }
 
 func (g *Game) draw() {
@@ -126,7 +132,7 @@ func (g *Game) draw() {
 
 	gl.Call("useProgram", g.glCtx.Program)
 
-	g.glCtx.DrawTexture(g.level.Background, g.glCtx.CanvasRect)
+	g.glCtx.DrawTexture(g.currentLevel.Background, g.glCtx.CanvasRect)
 
 	for _, f := range g.fighters {
 		g.glCtx.DrawSprite(f.Character.Sprite, f.Collider.Pos, 5)
@@ -137,9 +143,9 @@ func (g *Game) sendPlayerState() {
 	msg := message.Message{
 		Type: message.GameStateMsg,
 		Data: message.FighterInfo{
-			ID:            PlayerId,
+			ID:            g.playerId,
 			CharacterName: string(character.Warrior),
-			Collider:      g.fighters[PlayerId].Collider,
+			Collider:      g.fighters[g.playerId].Collider,
 		},
 	}
 

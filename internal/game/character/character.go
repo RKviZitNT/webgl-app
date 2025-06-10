@@ -30,5 +30,3 @@ func NewCharacter(name CharacterName, sprite *sprite.Sprite) *Character {
 func (c *Character) AddAnimation(name string, animation *animation.Animation) {
 	c.Animations[name] = animation
 }
-
-var Characters map[CharacterName]*Character
