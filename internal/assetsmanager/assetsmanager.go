@@ -8,6 +8,7 @@ import (
 	"syscall/js"
 	"webgl-app/internal/graphics/texture"
 	"webgl-app/internal/graphics/webgl"
+	"webgl-app/internal/jsfunc"
 	"webgl-app/internal/resourceloader"
 )
 
@@ -27,11 +28,11 @@ type AssetsManager struct {
 func NewAssetsManager() *AssetsManager {
 	ASrc = AssetsSources{
 		MetaDataSrc: map[string]string{
-			"warrior_anim": "assets/meta/warrior_anim.json",
+			"warrior_anim": "assets/meta/warrior_anim_data.json",
 		},
 		TexturesSrc: map[string]string{
 			"background1": "assets/images/backgrounds/background1.jpg",
-			"warrior":     "assets/sprites/warrior/spritesheet.png",
+			"warrior":     "assets/sprites/warrior/warrior_spritesheet.png",
 		},
 	}
 
@@ -79,7 +80,7 @@ func (a *AssetsManager) loadMetadata(srcPaths map[string]string) error {
 			wg.Done()
 		},
 		func(loaded int) {
-			js.Global().Get("console").Call("log", fmt.Sprintf("Loaded %d/%d metadata", loaded, total))
+			jsfunc.LogInfo(fmt.Sprintf("Loaded %d/%d metadata", loaded, total))
 			js.Global().Call("setLoadingProgress", 10+(float64(loaded)/float64(total)*45), fmt.Sprintf("Loading metadata... %d/%d", loaded, total))
 		})
 
@@ -112,7 +113,7 @@ func (a *AssetsManager) loadTextures(glCtx *webgl.GLContext, srcPaths map[string
 			wg.Done()
 		},
 		func(loaded int) {
-			js.Global().Get("console").Call("log", fmt.Sprintf("Loaded %d/%d textures", loaded, total))
+			jsfunc.LogInfo(fmt.Sprintf("Loaded %d/%d textures", loaded, total))
 			js.Global().Call("setLoadingProgress", 55+(float64(loaded)/float64(total)*45), fmt.Sprintf("Loading textures... %d/%d", loaded, total))
 		})
 

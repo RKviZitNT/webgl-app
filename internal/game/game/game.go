@@ -13,8 +13,8 @@ import (
 	"webgl-app/internal/game/level"
 	"webgl-app/internal/graphics/animation"
 	"webgl-app/internal/graphics/primitives"
-	"webgl-app/internal/graphics/sprite"
 	"webgl-app/internal/graphics/webgl"
+	"webgl-app/internal/jsfunc"
 	"webgl-app/internal/net/message"
 )
 
@@ -50,7 +50,7 @@ func NewGame(socket *js.Value, glCtx *webgl.GLContext) (*Game, error) {
 	if err != nil {
 		return nil, err
 	}
-	warriorChar := character.NewCharacter(character.Warrior, sprite.NewSprite(assets.GetTexture(string(character.Warrior)), primitives.NewRect(primitives.NewVec2(0, 0), primitives.NewVec2(69, 44))))
+	warriorChar := character.NewCharacter(character.Warrior, warriorAnim[animation.Idle].GetCurrentFrame())
 	warriorChar.SetAnimations(warriorAnim)
 	characters[character.Warrior] = warriorChar
 
@@ -91,6 +91,7 @@ func (g *Game) Start(playerId string, fightersInfo []message.FighterInfo) {
 	g.fighters = make(map[string]*fighter.Fighter)
 	for _, fighterInfo := range fightersInfo {
 		g.fighters[fighterInfo.ID] = fighter.NewFighter(g.characters[character.CharacterName(fighterInfo.CharacterName)], fighterInfo.Collider)
+		g.fighters[fighterInfo.ID].SetAnimation(animation.Idle)
 	}
 
 	g.renderLoop()
@@ -159,7 +160,7 @@ func (g *Game) update(deltaTime time.Duration) {
 	g.fighters[g.playerId].Collider.Move(Direction)
 
 	for _, f := range g.fighters {
-		f.Character.Animations[animation.Idle].Update(float64(deltaTime.Milliseconds()))
+		f.Animation.Update(float64(deltaTime.Milliseconds()))
 	}
 }
 
@@ -167,7 +168,7 @@ func (g *Game) draw() {
 	g.glCtx.RenderTexture(g.currentLevel.Background, g.glCtx.CanvasRect)
 
 	for _, f := range g.fighters {
-		g.glCtx.RenderSprite(f.Character.Animations[f.State].GetCurrentFrame(), f.Collider.Pos, 5)
+		g.glCtx.RenderSprite(f.Animation.GetCurrentFrame(), f.Collider.Pos, 5)
 	}
 
 	g.glCtx.FlushDrawQueue()
@@ -204,7 +205,7 @@ func (g *Game) sendEndGameMsg() {
 func (g *Game) sendMessage(msg message.Message) {
 	jsonData, err := json.Marshal(msg)
 	if err != nil {
-		js.Global().Get("console").Call("error", fmt.Sprint("JSON error:", err.Error()))
+		jsfunc.LogError(fmt.Sprint("JSON error:", err.Error()))
 		return
 	}
 	g.socket.Call("send", string(jsonData))

@@ -5,6 +5,7 @@ package texture
 import (
 	"syscall/js"
 	"webgl-app/internal/graphics/primitives"
+	"webgl-app/internal/jsfunc"
 )
 
 type Texture struct {
@@ -15,7 +16,7 @@ type Texture struct {
 
 func NewTexture(gl js.Value, image js.Value) *Texture {
 	if image.IsUndefined() || image.IsNull() {
-		js.Global().Get("console").Call("error", "NewTexture: image is undefined or null")
+		jsfunc.LogError("NewTexture: image is undefined or null")
 		return nil
 	}
 

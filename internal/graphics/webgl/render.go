@@ -3,15 +3,21 @@
 package webgl
 
 import (
-	"syscall/js"
 	"webgl-app/internal/graphics/primitives"
 	"webgl-app/internal/graphics/sprite"
 	"webgl-app/internal/graphics/texture"
+	"webgl-app/internal/jsfunc"
 )
 
 func (ctx *GLContext) RenderTexture(texture *texture.Texture, rect primitives.Rect) {
 	if texture == nil {
-		js.Global().Get("console").Call("error", "RenderTexture error: texture is nil")
+		jsfunc.LogError("RenderTexture: texture is nil")
+		return
+	}
+
+	tex := texture.GetTexture()
+	if tex == nil || tex.IsUndefined() || tex.IsNull() {
+		jsfunc.LogError("RenderTexture: texture not loaded")
 		return
 	}
 
@@ -34,14 +40,19 @@ func (ctx *GLContext) RenderTexture(texture *texture.Texture, rect primitives.Re
 }
 
 func (ctx *GLContext) RenderSprite(sprite *sprite.Sprite, pos primitives.Vec2, scale float64) {
+	if sprite == nil {
+		jsfunc.LogError("RenderSprite: sprite is nil")
+		return
+	}
+
 	if sprite.Texture == nil {
-		js.Global().Get("console").Call("error", "RenderSprite error: texture is nil")
+		jsfunc.LogError("RenderSprite: sprite.Texture is nil")
 		return
 	}
 
 	texture := sprite.Texture.GetTexture()
 	if texture == nil || texture.IsUndefined() || texture.IsNull() {
-		js.Global().Get("console").Call("error", "RenderSprite error: texture not loaded")
+		jsfunc.LogError("RenderSprite: texture not loaded")
 		return
 	}
 

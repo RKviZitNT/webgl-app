@@ -22,3 +22,8 @@ func NewFighter(character *character.Character, collider primitives.Rect) *Fight
 		State:     animation.Idle,
 	}
 }
+
+func (f *Fighter) SetAnimation(aType animation.AnimationType) {
+	f.Animation.Reset()
+	f.Animation = f.Character.Animations[aType]
+}

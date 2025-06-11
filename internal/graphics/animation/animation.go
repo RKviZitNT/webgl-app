@@ -3,9 +3,11 @@
 package animation
 
 import (
+	"fmt"
 	"webgl-app/internal/graphics/primitives"
 	"webgl-app/internal/graphics/sprite"
 	"webgl-app/internal/graphics/texture"
+	"webgl-app/internal/jsfunc"
 	"webgl-app/internal/utils"
 )
 
@@ -98,7 +100,25 @@ func CreateAnimations(aTypes []AnimationType, metadata string, texture *texture.
 	return animations, nil
 }
 
+func (a *Animation) Reset() {
+	if a == nil {
+		return
+	}
+	a.timer = 0
+	a.currentFrameIdx = 0
+}
+
 func (a *Animation) Update(deltaTime float64) {
+	if a == nil {
+		jsfunc.LogError("Animation.Update: nil animation")
+		return
+	}
+
+	if len(a.Frames) == 0 {
+		jsfunc.LogError("Animation.Update: empty frames")
+		return
+	}
+
 	a.timer += deltaTime
 	if a.timer > a.FrameTime {
 		a.timer = 0
@@ -107,5 +127,25 @@ func (a *Animation) Update(deltaTime float64) {
 }
 
 func (a *Animation) GetCurrentFrame() *sprite.Sprite {
-	return a.Frames[a.currentFrameIdx]
+	if a == nil {
+		jsfunc.LogError("Animation.Update: nil animation")
+		return nil
+	}
+
+	if len(a.Frames) == 0 {
+		jsfunc.LogError("Animation.Update: empty frames")
+		return nil
+	}
+
+	if a.currentFrameIdx >= len(a.Frames) {
+		jsfunc.LogError(fmt.Sprintf("Animation.GetCurrentFrame: invalid frame index %d/%d", a.currentFrameIdx, len(a.Frames)))
+		return nil
+	}
+
+	frame := a.Frames[a.currentFrameIdx]
+	if frame == nil {
+		jsfunc.LogError(fmt.Sprintf("Animation.GetCurrentFrame: nil frame at index %d", a.currentFrameIdx))
+	}
+
+	return frame
 }
