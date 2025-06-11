@@ -12,6 +12,7 @@ type Fighter struct {
 	Character *character.Character
 	Collider  primitives.Rect
 	State     animation.AnimationType
+	Animation *animation.Animation
 }
 
 func NewFighter(character *character.Character, collider primitives.Rect) *Fighter {

@@ -67,10 +67,10 @@ func (v *Vec2) Length() float64 {
 	return math.Sqrt(v.X*v.X + v.Y*v.Y)
 }
 
-func (v *Vec2) Normalize() Vec2 {
+func (v *Vec2) Normalize() {
 	len := v.Length()
 	if len > 0 {
-		return Vec2{v.X / len, v.Y / len}
+		v.X = v.X / len
+		v.Y = v.Y / len
 	}
-	return Vec2{}
 }

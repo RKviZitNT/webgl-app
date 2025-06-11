@@ -43,6 +43,10 @@ func InitGame(GLCtx *webgl.GLContext) error {
 }
 
 func connectWebSocket() {
+	if !socket.IsUndefined() {
+		socket.Call("close")
+	}
+
 	socket = js.Global().Get("WebSocket").New("ws://localhost:8080/ws")
 
 	socket.Set("onopen", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
@@ -51,14 +55,19 @@ func connectWebSocket() {
 	}))
 
 	socket.Set("onmessage", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		msg := args[0].Get("data").String()
-		//js.Global().Get("console").Call("log", fmt.Sprint("Received:", msg))
-		handleServerMessage(msg)
+		handleServerMessage(args[0].Get("data").String())
 		return nil
 	}))
 
 	socket.Set("onerror", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		js.Global().Get("console").Call("errror", "WebSocket error")
+		js.Global().Get("console").Call("error", "WebSocket connection error")
+		socket.Call("close")
+		gm.Stop()
+		return nil
+	}))
+
+	socket.Set("onclose", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		js.Global().Get("console").Call("log", "WebSocket connection closed")
 		return nil
 	}))
 }

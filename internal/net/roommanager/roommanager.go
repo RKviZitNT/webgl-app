@@ -5,7 +5,7 @@ import (
 	"sync"
 	"webgl-app/internal/net/player"
 	"webgl-app/internal/net/room"
-	"webgl-app/internal/net/utils"
+	"webgl-app/internal/utils"
 )
 
 type RoomManager struct {
@@ -24,7 +24,7 @@ func (rm *RoomManager) CreateRoom(ownerID string, settings room.RoomSettings) (s
 		return "", fmt.Errorf("invalid max players count")
 	}
 
-	roomCode, err := rm.generateUniqueCode(6)
+	roomCode, err := rm.generateRoomCode(6)
 	if err != nil {
 		return "", err
 	}
@@ -102,7 +102,7 @@ func (rm *RoomManager) GetRoom(roomCode string) (*room.Room, error) {
 	return room, nil
 }
 
-func (rm *RoomManager) generateUniqueCode(lenght int) (string, error) {
+func (rm *RoomManager) generateRoomCode(lenght int) (string, error) {
 	const maxAttempts = 100
 	for i := 0; i < maxAttempts; i++ {
 		code, err := utils.GenerateRandomCode(lenght)

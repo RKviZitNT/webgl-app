@@ -16,17 +16,21 @@ const (
 type Character struct {
 	Name       CharacterName
 	Sprite     *sprite.Sprite
-	Animations map[string]*animation.Animation
+	Animations map[animation.AnimationType]*animation.Animation
 }
 
 func NewCharacter(name CharacterName, sprite *sprite.Sprite) *Character {
 	return &Character{
 		Name:       name,
 		Sprite:     sprite,
-		Animations: make(map[string]*animation.Animation),
+		Animations: make(map[animation.AnimationType]*animation.Animation),
 	}
 }
 
-func (c *Character) AddAnimation(name string, animation *animation.Animation) {
-	c.Animations[name] = animation
+func (c *Character) AddAnimation(aType animation.AnimationType, animation *animation.Animation) {
+	c.Animations[aType] = animation
+}
+
+func (c *Character) SetAnimations(animations map[animation.AnimationType]*animation.Animation) {
+	c.Animations = animations
 }

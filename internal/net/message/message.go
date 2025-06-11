@@ -1,6 +1,8 @@
 package message
 
-import "webgl-app/internal/graphics/primitives"
+import (
+	"webgl-app/internal/graphics/primitives"
+)
 
 type MessageType string
 

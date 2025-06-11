@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"syscall/js"
+	"time"
 	"webgl-app/internal/assetsmanager"
 	"webgl-app/internal/game/character"
 	"webgl-app/internal/game/fighter"
@@ -43,7 +44,15 @@ func NewGame(socket *js.Value, glCtx *webgl.GLContext) (*Game, error) {
 	}
 
 	characters := make(map[character.CharacterName]*character.Character)
-	characters[character.Warrior] = character.NewCharacter(character.Warrior, sprite.NewSprite(assets.GetTexture(string(character.Warrior)), primitives.NewRect(primitives.NewVec2(0, 0), primitives.NewVec2(69, 44))))
+
+	aTypes := []animation.AnimationType{animation.Idle, animation.Walk, animation.Attack1, animation.Attack2, animation.Death, animation.Hurt, animation.Jump}
+	warriorAnim, err := animation.CreateAnimations(aTypes, assets.GetMetadata("warrior_anim").String(), assets.GetTexture("warrior"))
+	if err != nil {
+		return nil, err
+	}
+	warriorChar := character.NewCharacter(character.Warrior, sprite.NewSprite(assets.GetTexture(string(character.Warrior)), primitives.NewRect(primitives.NewVec2(0, 0), primitives.NewVec2(69, 44))))
+	warriorChar.SetAnimations(warriorAnim)
+	characters[character.Warrior] = warriorChar
 
 	levels := make(map[level.LevelName]*level.Level)
 	levels[level.DefaultLevel] = level.NewLevel(level.DefaultLevel, assets.GetTexture("background1"), assets.GetTexture("background1"))
@@ -64,7 +73,7 @@ func (g *Game) Start(playerId string, fightersInfo []message.FighterInfo) {
 
 	g.currentLevel = g.levels[level.DefaultLevel]
 
-	Speed = 2
+	Speed = 200.0
 
 	js.Global().Call("addEventListener", "keydown", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		code := args[0].Get("code").String()
@@ -94,13 +103,30 @@ func (g *Game) Stop() {
 }
 
 func (g *Game) renderLoop() {
-	var renderFrame js.Func
+	var (
+		renderFrame   js.Func
+		frameTime     = time.Second / 240
+		lastFrameTime time.Time
+		elapsedTime   time.Duration
+	)
+
+	lastFrameTime = time.Now()
 
 	renderFrame = js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		if g.running {
-			g.update()
+			currentTime := time.Now()
+			deltaTime := currentTime.Sub(lastFrameTime)
+			lastFrameTime = currentTime
+
+			g.update(deltaTime)
 			g.sendPlayerState()
 			g.draw()
+
+			elapsedTime += deltaTime
+			if elapsedTime < frameTime {
+				time.Sleep(frameTime - elapsedTime)
+			}
+
 			js.Global().Call("requestAnimationFrame", renderFrame)
 		}
 		return nil
@@ -109,7 +135,7 @@ func (g *Game) renderLoop() {
 	js.Global().Call("requestAnimationFrame", renderFrame)
 }
 
-func (g *Game) update() {
+func (g *Game) update(deltaTime time.Duration) {
 	Direction = primitives.NewVec2(0, 0)
 
 	if g.keys["ArrowRight"] || g.keys["KeyD"] {
@@ -124,9 +150,17 @@ func (g *Game) update() {
 	if g.keys["ArrowDown"] || g.keys["KeyS"] {
 		Direction.AddVec2(primitives.NewVec2(0, 1))
 	}
+	if g.keys["Escape"] {
+		g.sendEndGameMsg()
+	}
 
-	Direction.MulValue(Speed)
-	g.fighters[g.playerId].Collider.Move(Direction.Normalize())
+	Direction.Normalize()
+	Direction.MulValue(Speed * deltaTime.Seconds())
+	g.fighters[g.playerId].Collider.Move(Direction)
+
+	for _, f := range g.fighters {
+		f.Character.Animations[animation.Idle].Update(float64(deltaTime.Milliseconds()))
+	}
 }
 
 func (g *Game) draw() {
@@ -141,8 +175,14 @@ func (g *Game) draw() {
 	g.glCtx.DrawTexture(g.currentLevel.Background, g.glCtx.CanvasRect)
 
 	for _, f := range g.fighters {
-		g.glCtx.DrawSprite(f.Character.Sprite, f.Collider.Pos, 5)
+		g.glCtx.DrawSprite(f.Character.Animations[f.State].GetCurrentFrame(), f.Collider.Pos, 5)
 	}
+}
+
+func (g *Game) UpdatePlayersData(fighterInfo message.FighterInfo) {
+	fighter := g.fighters[fighterInfo.ID]
+	fighter.Collider = fighterInfo.Collider
+	fighter.State = animation.AnimationType(fighterInfo.State)
 }
 
 func (g *Game) sendPlayerState() {
@@ -155,16 +195,23 @@ func (g *Game) sendPlayerState() {
 		},
 	}
 
+	g.sendMessage(msg)
+}
+
+func (g *Game) sendEndGameMsg() {
+	msg := message.Message{
+		Type: message.EndGameMsg,
+		Data: nil,
+	}
+
+	g.sendMessage(msg)
+}
+
+func (g *Game) sendMessage(msg message.Message) {
 	jsonData, err := json.Marshal(msg)
 	if err != nil {
 		js.Global().Get("console").Call("error", fmt.Sprint("JSON error:", err.Error()))
 		return
 	}
 	g.socket.Call("send", string(jsonData))
-}
-
-func (g *Game) UpdatePlayersData(fighterInfo message.FighterInfo) {
-	fighter := g.fighters[fighterInfo.ID]
-	fighter.Collider = fighterInfo.Collider
-	fighter.State = animation.AnimationType(fighterInfo.State)
 }

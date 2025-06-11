@@ -21,10 +21,15 @@ func GenerateRandomCode(lenght int) (string, error) {
 	return string(code), nil
 }
 
-func ReadStruct(data interface{}, target interface{}) error {
-	bytes, err := json.Marshal(data)
+func ParseInterfaceToJSON(msgData interface{}, output interface{}) error {
+	bytes, err := json.Marshal(msgData)
 	if err != nil {
 		return err
 	}
-	return json.Unmarshal(bytes, target)
+	return json.Unmarshal(bytes, output)
+}
+
+func ParseStringToJSON(data string, output interface{}) error {
+	bytes := []byte(data)
+	return json.Unmarshal(bytes, output)
 }

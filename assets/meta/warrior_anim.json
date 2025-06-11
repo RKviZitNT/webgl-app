@@ -8,30 +8,37 @@
     },    
     "animations": {
         "idle": {
+            "frame_time": 170,
             "first_frame": 1,
             "frame_count": 6
         },
         "walk": {
+            "frame_time": 170,
             "first_frame": 7,
             "frame_count": 8
         },
         "attack1": {
+            "frame_time": 170,
             "first_frame": 15,
             "frame_count": 8
         },
         "attack2": {
+            "frame_time": 170,
             "first_frame": 23,
             "frame_count": 4
         },
         "death": {
+            "frame_time": 170,
             "first_frame": 27,
             "frame_count": 11
         },
         "hurt": {
+            "frame_time": 170,
             "first_frame": 38,
             "frame_count": 4
         },
         "jump": {
+            "frame_time": 170,
             "first_frame": 42,
             "frame_count": 8
         }
