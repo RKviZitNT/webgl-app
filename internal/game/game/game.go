@@ -164,19 +164,13 @@ func (g *Game) update(deltaTime time.Duration) {
 }
 
 func (g *Game) draw() {
-	gl := g.glCtx.GL
-
-	gl.Call("viewport", 0, 0, g.glCtx.CanvasRect.Width(), g.glCtx.CanvasRect.Height())
-	gl.Call("clearColor", 0.9, 0.9, 0.9, 1.0)
-	gl.Call("clear", gl.Get("COLOR_BUFFER_BIT"))
-
-	gl.Call("useProgram", g.glCtx.Program)
-
-	g.glCtx.DrawTexture(g.currentLevel.Background, g.glCtx.CanvasRect)
+	g.glCtx.RenderTexture(g.currentLevel.Background, g.glCtx.CanvasRect)
 
 	for _, f := range g.fighters {
-		g.glCtx.DrawSprite(f.Character.Animations[f.State].GetCurrentFrame(), f.Collider.Pos, 5)
+		g.glCtx.RenderSprite(f.Character.Animations[f.State].GetCurrentFrame(), f.Collider.Pos, 5)
 	}
+
+	g.glCtx.FlushDrawQueue()
 }
 
 func (g *Game) UpdatePlayersData(fighterInfo message.FighterInfo) {

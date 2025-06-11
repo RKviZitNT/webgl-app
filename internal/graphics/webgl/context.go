@@ -14,6 +14,7 @@ type GLContext struct {
 	CanvasRect primitives.Rect
 	GL         js.Value
 	Program    js.Value
+	drawQueue  []DrawCommand
 }
 
 func NewWebGLCtx(canvasID string) (*GLContext, error) {
@@ -37,6 +38,7 @@ func NewWebGLCtx(canvasID string) (*GLContext, error) {
 		Canvas:     canvas,
 		CanvasRect: primitives.NewRect(primitives.NewVec2(0, 0), primitives.NewVec2(width, height)),
 		GL:         gl,
+		drawQueue:  make([]DrawCommand, 0),
 	}, nil
 }
 
