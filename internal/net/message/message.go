@@ -1,6 +1,8 @@
 package message
 
-import "webgl-app/internal/graphics/primitives"
+import (
+	"webgl-app/internal/graphics/primitives"
+)
 
 type MessageType string
 
@@ -42,6 +44,7 @@ type FighterInfo struct {
 	ID            string
 	CharacterName string
 	Collider      primitives.Rect
+	State         string
 }
 
 type StartGameData struct {

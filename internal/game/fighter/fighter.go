@@ -4,17 +4,21 @@ package fighter
 
 import (
 	"webgl-app/internal/game/character"
+	"webgl-app/internal/graphics/animation"
 	"webgl-app/internal/graphics/primitives"
 )
 
 type Fighter struct {
 	Character *character.Character
 	Collider  primitives.Rect
+	State     animation.AnimationType
+	Animation *animation.Animation
 }
 
-func NewFighter(characterName string, collider primitives.Rect) *Fighter {
+func NewFighter(character *character.Character, collider primitives.Rect) *Fighter {
 	return &Fighter{
-		Character: character.Characters[character.CharacterName(characterName)],
+		Character: character,
 		Collider:  collider,
+		State:     animation.Idle,
 	}
 }

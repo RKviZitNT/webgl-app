@@ -25,17 +25,16 @@ func LoadImage(path string, onSuccess imageCallback, onError errorCallback) {
 	}))
 }
 
-func LoadImages(assetsSrc map[string]string, onSuccess imagesCallback, onError errorCallback, onProgress progressCallback) {
-	total := len(assetsSrc)
+func LoadImages(srcPaths map[string]string, onSuccess imagesCallback, onError errorCallback, onProgress progressCallback) {
 	loaded := 0
 
-	for name, path := range assetsSrc {
+	for name, path := range srcPaths {
 		promise := js.Global().Call("loadImage", path)
 
 		promise.Call("then", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 			loaded++
 			if onProgress != nil {
-				onProgress(total, loaded)
+				onProgress(loaded)
 			}
 			if onSuccess != nil {
 				onSuccess(name, args[0])
@@ -45,7 +44,7 @@ func LoadImages(assetsSrc map[string]string, onSuccess imagesCallback, onError e
 
 		promise.Call("catch", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 			if onProgress != nil {
-				onProgress(total, loaded)
+				onProgress(loaded)
 			}
 			if onError != nil {
 				onError(errors.New(args[0].Get("message").String()))

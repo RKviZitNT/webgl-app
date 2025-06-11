@@ -5,7 +5,7 @@ import (
 	"webgl-app/internal/net/message"
 	"webgl-app/internal/net/player"
 	"webgl-app/internal/net/room"
-	"webgl-app/internal/net/utils"
+	"webgl-app/internal/utils"
 )
 
 func (ws *WebSocket) handleMessage(player *player.Player, msg *message.Message) {
@@ -17,7 +17,9 @@ func (ws *WebSocket) handleMessage(player *player.Player, msg *message.Message) 
 	case message.LeaveRoomMsg:
 		ws.handleLeaveRoom(player)
 	case message.StartGameMsg:
-		ws.HandleStartGame(player)
+		ws.handleStartGame(player)
+	case message.EndGameMsg:
+		ws.handleEndGame(player)
 	case message.UpdateRoomInfoMsg:
 		ws.handleUpdateRoomInfo(player)
 	case message.UpdatePlayerInfoMsg:
@@ -34,7 +36,7 @@ func (ws *WebSocket) handleMessage(player *player.Player, msg *message.Message) 
 
 func (ws *WebSocket) handleCreateRoom(player *player.Player, msg *message.Message) {
 	var settings room.RoomSettings
-	utils.ReadStruct(msg.Data, &settings)
+	utils.ParseInterfaceToJSON(msg.Data, &settings)
 
 	roomCode, err := ws.rm.CreateRoom(player.ID(), settings)
 	if err != nil {
@@ -130,7 +132,7 @@ func (ws *WebSocket) handleLeaveRoom(player *player.Player) {
 	}
 }
 
-func (ws *WebSocket) HandleStartGame(player *player.Player) {
+func (ws *WebSocket) handleStartGame(player *player.Player) {
 	roomCode := player.GetRoomID()
 	if roomCode == "" {
 		player.Send(message.Message{
@@ -177,6 +179,31 @@ func (ws *WebSocket) HandleStartGame(player *player.Player) {
 		Data: message.StartGameData{
 			FightersInfo: fightersInfo,
 		},
+	}, nil)
+}
+
+func (ws *WebSocket) handleEndGame(player *player.Player) {
+	roomCode := player.GetRoomID()
+	if roomCode == "" {
+		player.Send(message.Message{
+			Type: message.ErrorMsg,
+			Data: "Player is not in any room",
+		})
+		return
+	}
+
+	room, err := ws.rm.GetRoom(roomCode)
+	if err != nil {
+		player.Send(message.Message{
+			Type: message.ErrorMsg,
+			Data: err.Error(),
+		})
+		return
+	}
+
+	room.Broadcast(message.Message{
+		Type: message.EndGameMsg,
+		Data: nil,
 	}, nil)
 }
 

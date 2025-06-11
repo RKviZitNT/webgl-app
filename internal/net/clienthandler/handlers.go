@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"syscall/js"
 	"webgl-app/internal/net/message"
-	"webgl-app/internal/net/utils"
+	"webgl-app/internal/utils"
 )
 
 func handleServerMessage(raw string) {
@@ -26,6 +26,8 @@ func handleServerMessage(raw string) {
 		handleLeaveRoom(msg.Data)
 	case message.StartGameMsg:
 		handleStartGame(msg.Data)
+	case message.EndGameMsg:
+		handleEndGame(msg.Data)
 	case message.UpdateRoomInfoMsg:
 		handleUpdateRoomInfo(msg.Data)
 	case message.UpdatePlayerInfoMsg:
@@ -65,13 +67,18 @@ func handleStartGame(data interface{}) {
 	js.Global().Call("showScreen", "game_screen")
 
 	var gameData message.StartGameData
-	utils.ReadStruct(data, &gameData)
+	utils.ParseInterfaceToJSON(data, &gameData)
 
 	go gm.Start(playerInfo.ID, gameData.FightersInfo)
 }
 
+func handleEndGame(data interface{}) {
+	gm.Stop()
+	js.Global().Call("showScreen", "main_menu")
+}
+
 func handleUpdateRoomInfo(data interface{}) {
-	if err := utils.ReadStruct(data, &roomInfo); err != nil {
+	if err := utils.ParseInterfaceToJSON(data, &roomInfo); err != nil {
 		js.Global().Get("console").Call("error", err.Error())
 		return
 	}
@@ -80,7 +87,7 @@ func handleUpdateRoomInfo(data interface{}) {
 }
 
 func handleUpdatePlayerInfo(data interface{}) {
-	if err := utils.ReadStruct(data, &playerInfo); err != nil {
+	if err := utils.ParseInterfaceToJSON(data, &playerInfo); err != nil {
 		js.Global().Get("console").Call("error", err.Error())
 		return
 	}
@@ -102,10 +109,11 @@ func handleRoomClosed(data interface{}) {
 
 func handleGameState(data interface{}) {
 	var playerState message.FighterInfo
-	utils.ReadStruct(data, &playerState)
+	utils.ParseInterfaceToJSON(data, &playerState)
 	gm.UpdatePlayersData(playerState)
 }
 
 func handleError(data interface{}) {
-
+	gm.Stop()
+	js.Global().Call("showScreen", "main_menu")
 }
