@@ -49,8 +49,8 @@ func (ctx *GLContext) InitWebGL() error {
 
 	js.Global().Call("setLoadingProgress", 0, "Loading vertex shader...")
 	resourceloader.LoadFile("shaders/vertex.glsl",
-		func(src string) {
-			vertexSrc = src
+		func(src js.Value) {
+			vertexSrc = src.String()
 			shaderLoaded <- true
 		},
 		func(err error) {
@@ -66,8 +66,8 @@ func (ctx *GLContext) InitWebGL() error {
 
 	js.Global().Call("setLoadingProgress", 2, "Loading fragment shader...")
 	resourceloader.LoadFile("shaders/fragment.glsl",
-		func(src string) {
-			fragmentSrc = src
+		func(src js.Value) {
+			fragmentSrc = src.String()
 			shaderLoaded <- true
 		},
 		func(err error) {

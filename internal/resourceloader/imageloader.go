@@ -25,10 +25,10 @@ func LoadImage(path string, onSuccess imageCallback, onError errorCallback) {
 	}))
 }
 
-func LoadImages(assetsSrc map[string]string, onSuccess imagesCallback, onError errorCallback, onProgress progressCallback) {
+func LoadImages(srcPaths map[string]string, onSuccess imagesCallback, onError errorCallback, onProgress progressCallback) {
 	loaded := 0
 
-	for name, path := range assetsSrc {
+	for name, path := range srcPaths {
 		promise := js.Global().Call("loadImage", path)
 
 		promise.Call("then", js.FuncOf(func(this js.Value, args []js.Value) interface{} {

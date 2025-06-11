@@ -10,6 +10,7 @@ import (
 	"webgl-app/internal/game/character"
 	"webgl-app/internal/game/fighter"
 	"webgl-app/internal/game/level"
+	"webgl-app/internal/graphics/animation"
 	"webgl-app/internal/graphics/primitives"
 	"webgl-app/internal/graphics/sprite"
 	"webgl-app/internal/graphics/webgl"
@@ -18,6 +19,7 @@ import (
 
 type Game struct {
 	playerId     string
+	running      bool
 	socket       *js.Value
 	glCtx        *webgl.GLContext
 	keys         map[string]bool
@@ -35,7 +37,7 @@ var (
 
 func NewGame(socket *js.Value, glCtx *webgl.GLContext) (*Game, error) {
 	assets := assetsmanager.NewAssetsManager()
-	err := assets.Load(glCtx, assetsmanager.AssetsSrc)
+	err := assets.Load(glCtx, assetsmanager.ASrc)
 	if err != nil {
 		return nil, err
 	}
@@ -58,9 +60,11 @@ func NewGame(socket *js.Value, glCtx *webgl.GLContext) (*Game, error) {
 
 func (g *Game) Start(playerId string, fightersInfo []message.FighterInfo) {
 	g.playerId = playerId
-	Speed = 2
+	g.running = true
 
 	g.currentLevel = g.levels[level.DefaultLevel]
+
+	Speed = 2
 
 	js.Global().Call("addEventListener", "keydown", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		code := args[0].Get("code").String()
@@ -83,20 +87,22 @@ func (g *Game) Start(playerId string, fightersInfo []message.FighterInfo) {
 	g.renderLoop()
 }
 
-func (g *Game) Stop(exitMsg string) {
-	if exitMsg != "" {
-		js.Global().Call("log", exitMsg)
-	}
+func (g *Game) Stop() {
+	g.running = false
+	g.fighters = make(map[string]*fighter.Fighter)
+	g.currentLevel = nil
 }
 
 func (g *Game) renderLoop() {
 	var renderFrame js.Func
 
 	renderFrame = js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		g.update()
-		g.sendPlayerState()
-		g.draw()
-		js.Global().Call("requestAnimationFrame", renderFrame)
+		if g.running {
+			g.update()
+			g.sendPlayerState()
+			g.draw()
+			js.Global().Call("requestAnimationFrame", renderFrame)
+		}
 		return nil
 	})
 
@@ -158,5 +164,7 @@ func (g *Game) sendPlayerState() {
 }
 
 func (g *Game) UpdatePlayersData(fighterInfo message.FighterInfo) {
-	g.fighters[fighterInfo.ID].Collider = fighterInfo.Collider
+	fighter := g.fighters[fighterInfo.ID]
+	fighter.Collider = fighterInfo.Collider
+	fighter.State = animation.AnimationType(fighterInfo.State)
 }
