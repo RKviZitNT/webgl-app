@@ -6,6 +6,7 @@ import (
 	"syscall/js"
 	"webgl-app/internal/game/game"
 	"webgl-app/internal/graphics/webgl"
+	"webgl-app/internal/jsfunc"
 	"webgl-app/internal/net/message"
 	"webgl-app/internal/net/room"
 )
@@ -25,10 +26,12 @@ func RegisterCallbacks() {
 	js.Global().Set("leaveLobby", js.FuncOf(leaveLobby))
 	js.Global().Set("startGame", js.FuncOf(startGame))
 
-	js.Global().Call("setLoadingProgress", 100, "Connecting to server...")
+	jsfunc.LogInfo(" ----- Connecting to WebSocket ----- ")
+
+	js.Global().Call("setLoadingProgress", 100, "Initialization...")
 	connectWebSocket()
 
-	js.Global().Call("showScreen", "main_menu")
+	jsfunc.ShowScreen("main_menu")
 
 	<-c
 }
@@ -50,7 +53,7 @@ func connectWebSocket() {
 	socket = js.Global().Get("WebSocket").New("ws://localhost:8080/ws")
 
 	socket.Set("onopen", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		js.Global().Get("console").Call("log", "WebSocket connected")
+		jsfunc.LogInfo("WebSocket connected")
 		return nil
 	}))
 
@@ -60,14 +63,14 @@ func connectWebSocket() {
 	}))
 
 	socket.Set("onerror", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		js.Global().Get("console").Call("error", "WebSocket connection error")
+		jsfunc.LogError("WebSocket connection error")
 		socket.Call("close")
 		gm.Stop()
 		return nil
 	}))
 
 	socket.Set("onclose", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		js.Global().Get("console").Call("log", "WebSocket connection closed")
+		jsfunc.LogInfo("WebSocket connection closed")
 		return nil
 	}))
 }
@@ -77,7 +80,7 @@ func createLobby(this js.Value, args []js.Value) interface{} {
 		Type: message.CreateRoomMsg,
 		Data: room.RoomSettings{
 			MaxPlayers:  2,
-			NeedPlayers: 2,
+			NeedPlayers: 1,
 		},
 	}
 

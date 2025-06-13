@@ -5,10 +5,11 @@ package resourceloader
 import (
 	"errors"
 	"syscall/js"
+	"webgl-app/internal/jsfunc"
 )
 
 func LoadImage(path string, onSuccess imageCallback, onError errorCallback) {
-	promise := js.Global().Call("loadImage", path)
+	promise := jsfunc.LoadImage(path)
 
 	promise.Call("then", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		if onSuccess != nil {
@@ -29,7 +30,7 @@ func LoadImages(srcPaths map[string]string, onSuccess imagesCallback, onError er
 	loaded := 0
 
 	for name, path := range srcPaths {
-		promise := js.Global().Call("loadImage", path)
+		promise := jsfunc.LoadImage(path)
 
 		promise.Call("then", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 			loaded++

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"syscall/js"
+	"webgl-app/internal/jsfunc"
 	"webgl-app/internal/net/message"
 	"webgl-app/internal/utils"
 )
@@ -50,21 +51,21 @@ func handleServerMessage(raw string) {
 func handleCreateRoom(data interface{}) {
 	sendUpdateRoomInfoMsg()
 	sendUpdatePlayerInfoMsg()
-	js.Global().Call("showScreen", "lobby")
+	jsfunc.ShowScreen(jsfunc.LobbyScreen)
 }
 
 func handleJoinRoom(data interface{}) {
 	sendUpdateRoomInfoMsg()
 	sendUpdatePlayerInfoMsg()
-	js.Global().Call("showScreen", "lobby")
+	jsfunc.ShowScreen(jsfunc.LobbyScreen)
 }
 
 func handleLeaveRoom(data interface{}) {
-	js.Global().Call("showScreen", "main_menu")
+	jsfunc.ShowScreen(jsfunc.MainMenuScreen)
 }
 
 func handleStartGame(data interface{}) {
-	js.Global().Call("showScreen", "game_screen")
+	jsfunc.ShowScreen(jsfunc.GameScreenScreen)
 
 	var gameData message.StartGameData
 	utils.ParseInterfaceToJSON(data, &gameData)
@@ -74,7 +75,7 @@ func handleStartGame(data interface{}) {
 
 func handleEndGame(data interface{}) {
 	gm.Stop()
-	js.Global().Call("showScreen", "main_menu")
+	jsfunc.ShowScreen(jsfunc.MainMenuScreen)
 }
 
 func handleUpdateRoomInfo(data interface{}) {
@@ -104,7 +105,7 @@ func handlePlayerJoin(data interface{}) {
 }
 
 func handleRoomClosed(data interface{}) {
-	js.Global().Call("showScreen", "main_menu")
+	jsfunc.ShowScreen(jsfunc.MainMenuScreen)
 }
 
 func handleGameState(data interface{}) {
@@ -115,5 +116,5 @@ func handleGameState(data interface{}) {
 
 func handleError(data interface{}) {
 	gm.Stop()
-	js.Global().Call("showScreen", "main_menu")
+	jsfunc.ShowScreen(jsfunc.MainMenuScreen)
 }

@@ -3,9 +3,10 @@
 package animation
 
 import (
+	"fmt"
 	"webgl-app/internal/graphics/primitives"
-	"webgl-app/internal/graphics/sprite"
-	"webgl-app/internal/graphics/texture"
+	"webgl-app/internal/graphics/webgl"
+	"webgl-app/internal/jsfunc"
 	"webgl-app/internal/utils"
 )
 
@@ -42,18 +43,18 @@ type AnimationsData struct {
 }
 
 type Animation struct {
-	Frames          []*sprite.Sprite
+	Frames          []*webgl.Sprite
 	FrameTime       float64
 	timer           float64
 	currentFrameIdx int
 }
 
-func NewAnimation(aType AnimationType, data *AnimationsData, texture *texture.Texture) *Animation {
+func NewAnimation(aType AnimationType, data *AnimationsData, texture *webgl.Texture, scale float64, offset *primitives.Vec2) *Animation {
 	aData := data.Animations[string(aType)]
 
 	frameWidth := data.Parameters.Width / data.Parameters.FrameWidthCount
 	frameHeight := data.Parameters.Height / data.Parameters.FrameHeigntCount
-	frames := make([]*sprite.Sprite, 0, aData.FrameCount)
+	frames := make([]*webgl.Sprite, 0, aData.FrameCount)
 
 	for i := aData.FirstFrame; i < aData.FirstFrame+aData.FrameCount; i++ {
 		if i > data.Parameters.AllFrameCount {
@@ -73,7 +74,7 @@ func NewAnimation(aType AnimationType, data *AnimationsData, texture *texture.Te
 		)
 		rect := primitives.NewRect(pos, size)
 
-		frames = append(frames, sprite.NewSprite(texture, rect))
+		frames = append(frames, webgl.NewSprite(texture, rect, scale, offset))
 	}
 
 	return &Animation{
@@ -84,7 +85,7 @@ func NewAnimation(aType AnimationType, data *AnimationsData, texture *texture.Te
 	}
 }
 
-func CreateAnimations(aTypes []AnimationType, metadata string, texture *texture.Texture) (map[AnimationType]*Animation, error) {
+func NewAnimationsSet(aTypes []AnimationType, metadata string, texture *webgl.Texture, scale float64, offset *primitives.Vec2) (map[AnimationType]*Animation, error) {
 	var data *AnimationsData
 	err := utils.ParseStringToJSON(metadata, &data)
 	if err != nil {
@@ -93,12 +94,30 @@ func CreateAnimations(aTypes []AnimationType, metadata string, texture *texture.
 
 	animations := make(map[AnimationType]*Animation)
 	for _, aType := range aTypes {
-		animations[aType] = NewAnimation(aType, data, texture)
+		animations[aType] = NewAnimation(aType, data, texture, scale, offset)
 	}
 	return animations, nil
 }
 
+func (a *Animation) Reset() {
+	if a == nil {
+		return
+	}
+	a.timer = 0
+	a.currentFrameIdx = 0
+}
+
 func (a *Animation) Update(deltaTime float64) {
+	if a == nil {
+		jsfunc.LogError("Animation.Update: nil animation")
+		return
+	}
+
+	if len(a.Frames) == 0 {
+		jsfunc.LogError("Animation.Update: empty frames")
+		return
+	}
+
 	a.timer += deltaTime
 	if a.timer > a.FrameTime {
 		a.timer = 0
@@ -106,6 +125,26 @@ func (a *Animation) Update(deltaTime float64) {
 	}
 }
 
-func (a *Animation) GetCurrentFrame() *sprite.Sprite {
-	return a.Frames[a.currentFrameIdx]
+func (a *Animation) GetCurrentFrame() *webgl.Sprite {
+	if a == nil {
+		jsfunc.LogError("Animation.Update: nil animation")
+		return nil
+	}
+
+	if len(a.Frames) == 0 {
+		jsfunc.LogError("Animation.Update: empty frames")
+		return nil
+	}
+
+	if a.currentFrameIdx >= len(a.Frames) {
+		jsfunc.LogError(fmt.Sprintf("Animation.GetCurrentFrame: invalid frame index %d/%d", a.currentFrameIdx, len(a.Frames)))
+		return nil
+	}
+
+	frame := a.Frames[a.currentFrameIdx]
+	if frame == nil {
+		jsfunc.LogError(fmt.Sprintf("Animation.GetCurrentFrame: nil frame at index %d", a.currentFrameIdx))
+	}
+
+	return frame
 }

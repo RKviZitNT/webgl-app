@@ -1,0 +1,12 @@
+{
+    "metadata": {
+        "warrior_anim": "assets/meta/warrior_anim_data.json",
+        "bringer-of-death_anim_data": "assets/meta/bringer-of-death_anim_data.json"
+    },
+    "textures": {
+        "background1": "assets/images/backgrounds/background1.jpg",
+        "background2": "assets/images/backgrounds/background2.jpg",
+        "warrior": "assets/sprites/warrior/warrior_spritesheet.png",
+        "bringer-of-death": "assets/sprites/bringer-of-death/bringer-of-death_spritesheet.png"
+    }
+}

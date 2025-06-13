@@ -3,7 +3,7 @@
 package level
 
 import (
-	"webgl-app/internal/graphics/texture"
+	"webgl-app/internal/graphics/webgl"
 )
 
 type LevelName string
@@ -14,14 +14,12 @@ const (
 
 type Level struct {
 	Name       LevelName
-	Background *texture.Texture
-	Floor      *texture.Texture
+	Background *webgl.Sprite
 }
 
-func NewLevel(name LevelName, background, floor *texture.Texture) *Level {
+func NewLevel(name LevelName, background *webgl.Sprite) *Level {
 	return &Level{
 		Name:       name,
 		Background: background,
-		Floor:      floor,
 	}
 }

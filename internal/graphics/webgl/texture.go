@@ -1,10 +1,11 @@
 //go:build js
 
-package texture
+package webgl
 
 import (
 	"syscall/js"
 	"webgl-app/internal/graphics/primitives"
+	"webgl-app/internal/jsfunc"
 )
 
 type Texture struct {
@@ -15,7 +16,7 @@ type Texture struct {
 
 func NewTexture(gl js.Value, image js.Value) *Texture {
 	if image.IsUndefined() || image.IsNull() {
-		js.Global().Get("console").Call("error", "NewTexture: image is undefined or null")
+		jsfunc.LogError("NewTexture: image is undefined or null")
 		return nil
 	}
 
@@ -40,6 +41,6 @@ func (t *Texture) GetTexture() *js.Value {
 	return &t.texture
 }
 
-func (t *Texture) Size() primitives.Vec2 {
+func (t *Texture) Size() *primitives.Vec2 {
 	return primitives.NewVec2(float64(t.width), float64(t.height))
 }
