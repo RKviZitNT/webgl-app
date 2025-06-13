@@ -6,7 +6,7 @@ import (
 	"syscall/js"
 )
 
-func (ctx *GLContext) CreateBuffer(data []float32, usage js.Value) js.Value {
+func (ctx *GLContext) createBuffer(data []float32, usage js.Value) js.Value {
 	gl := ctx.GL
 
 	buffer := gl.Call("createBuffer")

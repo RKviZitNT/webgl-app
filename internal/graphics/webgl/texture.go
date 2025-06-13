@@ -14,11 +14,13 @@ type Texture struct {
 	height  int
 }
 
-func NewTexture(gl js.Value, image js.Value) *Texture {
+func NewTexture(glCtx *GLContext, image js.Value) *Texture {
 	if image.IsUndefined() || image.IsNull() {
 		jsfunc.LogError("NewTexture: image is undefined or null")
 		return nil
 	}
+
+	gl := glCtx.GL
 
 	texture := gl.Call("createTexture")
 	gl.Call("bindTexture", gl.Get("TEXTURE_2D"), texture)

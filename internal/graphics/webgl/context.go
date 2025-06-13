@@ -8,100 +8,85 @@ import (
 	"webgl-app/internal/config"
 	"webgl-app/internal/graphics/primitives"
 	"webgl-app/internal/jsfunc"
-	"webgl-app/internal/resourceloader"
 )
 
 type GLContext struct {
-	GL        js.Value
-	Program   js.Value
-	Screen    *Screen
-	drawQueue []DrawCommand
+	GL           js.Value
+	Screen       *Screen
+	textureQueue *textureQueue
+	debugQueue   *debugQueue
 }
 
 func NewWebGLContext(canvasId string) (*GLContext, error) {
-	screen, err := NewScreen(canvasId, primitives.NewRect(primitives.NewVec2(0, 0), primitives.NewVec2(config.GlobalConfig.Window.Width, config.GlobalConfig.Window.Height)))
+	screen, err := newScreen(canvasId, primitives.NewRect(primitives.NewVec2(0, 0), primitives.NewVec2(config.ProgramConf.Window.Width, config.ProgramConf.Window.Height)))
 	if err != nil {
 		return nil, err
 	}
 
-	gl := screen.Canvas.Call("getContext", "webgl")
+	gl := screen.canvas.Call("getContext", "webgl")
 	if gl.IsNull() {
-		gl = screen.Canvas.Call("getContext", "experimental-webgl")
+		gl = screen.canvas.Call("getContext", "experimental-webgl")
 		if gl.IsNull() {
 			return nil, fmt.Errorf("WebGL not supported")
 		}
 	}
 
+	gl.Call("clearColor", 0.0, 0.0, 0.0, 1.0)
+
+	gl.Call("enable", gl.Get("BLEND"))
+	gl.Call("blendFunc", gl.Get("SRC_ALPHA"), gl.Get("ONE_MINUS_SRC_ALPHA"))
+
 	return &GLContext{
-		GL:        gl,
-		Screen:    screen,
-		drawQueue: make([]DrawCommand, 0),
+		GL:     gl,
+		Screen: screen,
 	}, nil
 }
 
 func (ctx *GLContext) InitWebGL() error {
-	gl := ctx.GL
-
-	shaderLoaded := make(chan bool, 1)
-	var loadErr error
-	var vertexSrc, fragmentSrc string
-
-	js.Global().Call("setLoadingProgress", 0, "Loading vertex shader...")
-	resourceloader.LoadFile("shaders/vertex.glsl",
-		func(src js.Value) {
-			vertexSrc = src.String()
-			shaderLoaded <- true
-		},
-		func(err error) {
-			loadErr = err
-			shaderLoaded <- false
-		})
-
-	if !<-shaderLoaded {
-		return fmt.Errorf("failed to load vertex shader: %v", loadErr)
-	} else {
-		jsfunc.LogInfo("Vertex shader loaded")
-	}
-
-	js.Global().Call("setLoadingProgress", 2, "Loading fragment shader...")
-	resourceloader.LoadFile("shaders/fragment.glsl",
-		func(src js.Value) {
-			fragmentSrc = src.String()
-			shaderLoaded <- true
-		},
-		func(err error) {
-			loadErr = err
-			shaderLoaded <- false
-		})
-
-	if !<-shaderLoaded {
-		return fmt.Errorf("failed to load fragment shader: %v", loadErr)
-	} else {
-		jsfunc.LogInfo("Fragment shader loaded")
-	}
-
-	js.Global().Call("setLoadingProgress", 4, "Compiling vertex shader...")
-	vShader, err := ctx.CompileShader(vertexSrc, gl.Get("VERTEX_SHADER"))
+	jsfunc.SetLoadingProgress(0, "Loading texture shaders...")
+	textureVertexSrc, textureFragmentSrc, err := ctx.loadShaders(config.ShadersConf.TextureShaders)
 	if err != nil {
-		return fmt.Errorf("vertex shader compilation failed: %v", err)
-	} else {
-		jsfunc.LogInfo("Vertex shader compiled")
+		return fmt.Errorf("failed to load texture shaders: %v", err)
 	}
+	jsfunc.LogInfo("Texture shaders loaded")
 
-	js.Global().Call("setLoadingProgress", 6, "Compiling vertex shader...")
-	fShader, err := ctx.CompileShader(fragmentSrc, gl.Get("FRAGMENT_SHADER"))
+	jsfunc.SetLoadingProgress(2, "Compiling texture shaders...")
+	texVertShader, texFragShader, err := ctx.compileShaders(textureVertexSrc, textureFragmentSrc)
 	if err != nil {
-		return fmt.Errorf("fragment shader compilation failed: %v", err)
-	} else {
-		jsfunc.LogInfo("Fragment shader compiled")
+		return fmt.Errorf("texture shaders compilation failed: %v", err)
 	}
+	jsfunc.LogInfo("Texture shaders compiled")
 
-	js.Global().Call("setLoadingProgress", 8, "Creating program...")
-	ctx.Program, err = ctx.CreateProgram(vShader, fShader)
+	jsfunc.SetLoadingProgress(8, "Creating program...")
+	textureProgram, err := ctx.createProgram(texVertShader, texFragShader)
 	if err != nil {
 		return fmt.Errorf("program creation failed: %v", err)
-	} else {
-		jsfunc.LogInfo("Program created")
+	}
+	ctx.textureQueue = newTextureQueue(textureProgram)
+	jsfunc.LogInfo("Texture queue created")
+
+	if config.ProgramConf.Debug {
+		jsfunc.SetLoadingProgress(4, "Loading debug shaders...")
+		debugVertexSrc, debugFragmentSrc, err := ctx.loadShaders(config.ShadersConf.DebugShaders)
+		if err != nil {
+			return fmt.Errorf("failed to load debug shaders: %v", err)
+		}
+		jsfunc.LogInfo("Debug shaders loaded")
+
+		jsfunc.SetLoadingProgress(6, "Compiling debug shaders...")
+		debugVertShader, debugFragShader, err := ctx.compileShaders(debugVertexSrc, debugFragmentSrc)
+		if err != nil {
+			return fmt.Errorf("debug shaders compilation failed: %v", err)
+		}
+		jsfunc.LogInfo("Debug shaders compiled")
+
+		jsfunc.SetLoadingProgress(8, "Creating program...")
+		debugProgram, err := ctx.createProgram(debugVertShader, debugFragShader)
+		if err != nil {
+			return fmt.Errorf("debug program creation failed: %v", err)
+		}
+		ctx.debugQueue = newDebugQueue(debugProgram)
+		jsfunc.LogInfo("Debug queue created")
 	}
 
 	return nil

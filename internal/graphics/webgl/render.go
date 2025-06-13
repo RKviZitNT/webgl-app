@@ -36,8 +36,8 @@ func (ctx *GLContext) RenderSprite(sprite *Sprite, drawRect *primitives.Rect) {
 	x1 = float32(drawRect.Left())
 	y1 = float32(drawRect.Top())
 	if sprite.Rect == nil {
-		x2 = float32(drawRect.Right() * sprite.Scale)
-		y2 = float32(drawRect.Bottom() * sprite.Scale)
+		x2 = float32(drawRect.Left() + drawRect.Width()*sprite.Scale)
+		y2 = float32(drawRect.Top() + drawRect.Height()*sprite.Scale)
 	} else {
 		x2 = float32(drawRect.Left() + sprite.Rect.Width()*sprite.Scale)
 		y2 = float32(drawRect.Top() + sprite.Rect.Height()*sprite.Scale)
@@ -52,7 +52,6 @@ func (ctx *GLContext) RenderSprite(sprite *Sprite, drawRect *primitives.Rect) {
 		v1 = float32(sprite.Rect.Top()) / float32(texSize.Y)
 		u2 = float32(sprite.Rect.Right()) / float32(texSize.X)
 		v2 = float32(sprite.Rect.Bottom()) / float32(texSize.Y)
-
 	}
 
 	bufferData := []float32{
@@ -62,5 +61,25 @@ func (ctx *GLContext) RenderSprite(sprite *Sprite, drawRect *primitives.Rect) {
 		x2, y2, u2, v2,
 	}
 
-	ctx.addDrawCommand(bufferData, sprite.Texture)
+	ctx.textureQueue.addCommand(bufferData, sprite.Texture)
+}
+
+func (ctx *GLContext) RenderRect(rect *primitives.Rect, thickness float32, color *Color) {
+	var (
+		x1, y1, x2, y2 float32
+	)
+
+	x1 = float32(rect.Left())
+	y1 = float32(rect.Top())
+	x2 = float32(rect.Right())
+	y2 = float32(rect.Bottom())
+
+	bufferData := []float32{
+		x1, y1,
+		x2, y1,
+		x2, y2,
+		x1, y2,
+	}
+
+	ctx.debugQueue.addCommand(bufferData, thickness, color)
 }

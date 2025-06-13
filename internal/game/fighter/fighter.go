@@ -54,13 +54,13 @@ func (f *Fighter) Move(keys map[string]bool, deltaTime float64) {
 	if f.Collider.Left() < 0 {
 		f.Collider.SetLeft(0)
 	}
-	if f.Collider.Right() > config.GlobalConfig.Window.Width {
-		f.Collider.SetRight(config.GlobalConfig.Window.Width)
+	if f.Collider.Right() > config.ProgramConf.Window.Width {
+		f.Collider.SetRight(config.ProgramConf.Window.Width)
 	}
 	if f.Collider.Top() < 0 {
 		f.Collider.SetTop(0)
 	}
-	if f.Collider.Bottom() > config.GlobalConfig.Window.Height {
-		f.Collider.SetBottom(config.GlobalConfig.Window.Height)
+	if f.Collider.Bottom() > config.ProgramConf.Window.Height {
+		f.Collider.SetBottom(config.ProgramConf.Window.Height)
 	}
 }

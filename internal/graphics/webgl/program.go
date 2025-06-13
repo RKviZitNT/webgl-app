@@ -7,7 +7,7 @@ import (
 	"syscall/js"
 )
 
-func (ctx *GLContext) CreateProgram(vertexShader, fragmentShader js.Value) (js.Value, error) {
+func (ctx *GLContext) createProgram(vertexShader, fragmentShader js.Value) (js.Value, error) {
 	gl := ctx.GL
 
 	program := gl.Call("createProgram")

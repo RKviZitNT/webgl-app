@@ -5,7 +5,6 @@ package clienthandler
 import (
 	"encoding/json"
 	"fmt"
-	"syscall/js"
 	"webgl-app/internal/jsfunc"
 	"webgl-app/internal/net/message"
 	"webgl-app/internal/utils"
@@ -14,7 +13,7 @@ import (
 func handleServerMessage(raw string) {
 	var msg message.Message
 	if err := json.Unmarshal([]byte(raw), &msg); err != nil {
-		js.Global().Get("console").Call("error", fmt.Sprint("Failed to parse message: ", err.Error()))
+		jsfunc.LogError(fmt.Sprint("Failed to parse message: ", err.Error()))
 		return
 	}
 
@@ -44,7 +43,7 @@ func handleServerMessage(raw string) {
 	case message.ErrorMsg:
 		handleError(msg.Data)
 	default:
-		js.Global().Get("console").Call("error", fmt.Sprint("Unknown message type: ", msg.Type))
+		jsfunc.LogError(fmt.Sprint("Unknown message type: ", msg.Type))
 	}
 }
 
@@ -65,22 +64,25 @@ func handleLeaveRoom(data interface{}) {
 }
 
 func handleStartGame(data interface{}) {
+	sendUpdateRoomInfoMsg()
 	jsfunc.ShowScreen(jsfunc.GameScreenScreen)
 
 	var gameData message.StartGameData
 	utils.ParseInterfaceToJSON(data, &gameData)
 
+	gm.Stop()
 	go gm.Start(playerInfo.ID, gameData.FightersInfo)
 }
 
 func handleEndGame(data interface{}) {
 	gm.Stop()
-	jsfunc.ShowScreen(jsfunc.MainMenuScreen)
+	sendUpdateRoomInfoMsg()
+	jsfunc.ShowScreen(jsfunc.LobbyScreen)
 }
 
 func handleUpdateRoomInfo(data interface{}) {
 	if err := utils.ParseInterfaceToJSON(data, &roomInfo); err != nil {
-		js.Global().Get("console").Call("error", err.Error())
+		jsfunc.LogError(err.Error())
 		return
 	}
 
@@ -89,7 +91,7 @@ func handleUpdateRoomInfo(data interface{}) {
 
 func handleUpdatePlayerInfo(data interface{}) {
 	if err := utils.ParseInterfaceToJSON(data, &playerInfo); err != nil {
-		js.Global().Get("console").Call("error", err.Error())
+		jsfunc.LogError(err.Error())
 		return
 	}
 
@@ -105,6 +107,7 @@ func handlePlayerJoin(data interface{}) {
 }
 
 func handleRoomClosed(data interface{}) {
+	gm.Stop()
 	jsfunc.ShowScreen(jsfunc.MainMenuScreen)
 }
 

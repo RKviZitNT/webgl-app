@@ -12,8 +12,8 @@ import (
 func main() {
 	var err error
 
-	jsfunc.LogInfo(" ----- Loading global config ----- ")
-	err = config.LoadConfig("config.json")
+	jsfunc.LogInfo(" ----- Loading configs ----- ")
+	err = config.LoadConfigs("config_program.json", "config_shaders.json", "config_assets.json")
 	if err != nil {
 		jsfunc.LogError(err.Error())
 	}

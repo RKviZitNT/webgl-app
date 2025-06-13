@@ -6,18 +6,11 @@ import (
 	"fmt"
 	"sync"
 	"syscall/js"
+	"webgl-app/internal/config"
 	"webgl-app/internal/graphics/webgl"
 	"webgl-app/internal/jsfunc"
 	"webgl-app/internal/resourceloader"
-	"webgl-app/internal/utils"
 )
-
-type AssetsSources struct {
-	MetaDataSrc map[string]string `json:"metadata"`
-	TexturesSrc map[string]string `json:"textures"`
-}
-
-var ASrc AssetsSources
 
 type AssetsManager struct {
 	metadata map[string]*js.Value
@@ -37,52 +30,19 @@ func (a *AssetsManager) Load(glCtx *webgl.GLContext, assetsConfig string) error 
 		loadErr error
 	)
 
-	js.Global().Call("setLoadingProgress", 10, "Loading assets config...")
-	assetsSrc, err := a.loadAssetsConfig(assetsConfig)
+	jsfunc.SetLoadingProgress(10, "Loading metadata...")
+	err := a.loadMetadata(config.AssetsConf.MetaDataSrc)
 	if err != nil {
 		return err
 	}
 
-	js.Global().Call("setLoadingProgress", 10, "Loading metadata...")
-	err = a.loadMetadata(assetsSrc.MetaDataSrc)
-	if err != nil {
-		return err
-	}
-
-	js.Global().Call("setLoadingProgress", 55, "Loading textures...")
-	err = a.loadTextures(glCtx, assetsSrc.TexturesSrc)
+	jsfunc.SetLoadingProgress(55, "Loading textures...")
+	err = a.loadTextures(glCtx, config.AssetsConf.TexturesSrc)
 	if err != nil {
 		return err
 	}
 
 	return loadErr
-}
-
-func (a *AssetsManager) loadAssetsConfig(assetsConfig string) (*AssetsSources, error) {
-	var (
-		loadErr   error
-		assetsSrc AssetsSources
-	)
-
-	done := make(chan struct{}, 0)
-
-	resourceloader.LoadFile(assetsConfig,
-		func(src js.Value) {
-			loadErr = utils.ParseStringToJSON(src.String(), &assetsSrc)
-			close(done)
-		},
-		func(err error) {
-			loadErr = err
-			close(done)
-		})
-
-	<-done
-
-	if loadErr != nil {
-		return nil, loadErr
-	}
-
-	return &assetsSrc, nil
 }
 
 func (a *AssetsManager) loadMetadata(srcPaths map[string]string) error {
@@ -110,7 +70,7 @@ func (a *AssetsManager) loadMetadata(srcPaths map[string]string) error {
 		},
 		func(loaded int) {
 			jsfunc.LogInfo(fmt.Sprintf("Loaded %d/%d metadata", loaded, total))
-			js.Global().Call("setLoadingProgress", 10+(float64(loaded)/float64(total)*45), fmt.Sprintf("Loading metadata... %d/%d", loaded, total))
+			jsfunc.SetLoadingProgress(10+(float64(loaded)/float64(total)*45), fmt.Sprintf("Loading metadata...  %d/%d", loaded, total))
 		})
 
 	wg.Wait()
@@ -130,7 +90,7 @@ func (a *AssetsManager) loadTextures(glCtx *webgl.GLContext, srcPaths map[string
 
 	resourceloader.LoadImages(srcPaths,
 		func(name string, img js.Value) {
-			a.addTexture(name, webgl.NewTexture(glCtx.GL, img))
+			a.addTexture(name, webgl.NewTexture(glCtx, img))
 			wg.Done()
 		},
 		func(err error) {
@@ -143,7 +103,7 @@ func (a *AssetsManager) loadTextures(glCtx *webgl.GLContext, srcPaths map[string
 		},
 		func(loaded int) {
 			jsfunc.LogInfo(fmt.Sprintf("Loaded %d/%d textures", loaded, total))
-			js.Global().Call("setLoadingProgress", 55+(float64(loaded)/float64(total)*45), fmt.Sprintf("Loading textures... %d/%d", loaded, total))
+			jsfunc.SetLoadingProgress(55+(float64(loaded)/float64(total)*45), fmt.Sprintf("Loading textures...  %d/%d", loaded, total))
 		})
 
 	wg.Wait()
