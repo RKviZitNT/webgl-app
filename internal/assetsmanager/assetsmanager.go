@@ -6,54 +6,83 @@ import (
 	"fmt"
 	"sync"
 	"syscall/js"
-	"webgl-app/internal/graphics/texture"
 	"webgl-app/internal/graphics/webgl"
 	"webgl-app/internal/jsfunc"
 	"webgl-app/internal/resourceloader"
+	"webgl-app/internal/utils"
 )
 
 type AssetsSources struct {
-	MetaDataSrc map[string]string
-	TexturesSrc map[string]string
+	MetaDataSrc map[string]string `json:"metadata"`
+	TexturesSrc map[string]string `json:"textures"`
 }
 
 var ASrc AssetsSources
 
 type AssetsManager struct {
 	metadata map[string]*js.Value
-	textures map[string]*texture.Texture
+	textures map[string]*webgl.Texture
 	mu       sync.RWMutex
 }
 
 func NewAssetsManager() *AssetsManager {
-	ASrc = AssetsSources{
-		MetaDataSrc: map[string]string{
-			"warrior_anim": "assets/meta/warrior_anim_data.json",
-		},
-		TexturesSrc: map[string]string{
-			"background1": "assets/images/backgrounds/background1.jpg",
-			"warrior":     "assets/sprites/warrior/warrior_spritesheet.png",
-		},
-	}
-
 	return &AssetsManager{
 		metadata: make(map[string]*js.Value),
-		textures: make(map[string]*texture.Texture),
+		textures: make(map[string]*webgl.Texture),
 	}
 }
 
-func (a *AssetsManager) Load(glCtx *webgl.GLContext, assetsSrc AssetsSources) error {
+func (a *AssetsManager) Load(glCtx *webgl.GLContext, assetsConfig string) error {
 	var (
 		loadErr error
 	)
 
+	js.Global().Call("setLoadingProgress", 10, "Loading assets config...")
+	assetsSrc, err := a.loadAssetsConfig(assetsConfig)
+	if err != nil {
+		return err
+	}
+
 	js.Global().Call("setLoadingProgress", 10, "Loading metadata...")
-	a.loadMetadata(assetsSrc.MetaDataSrc)
+	err = a.loadMetadata(assetsSrc.MetaDataSrc)
+	if err != nil {
+		return err
+	}
 
 	js.Global().Call("setLoadingProgress", 55, "Loading textures...")
-	a.loadTextures(glCtx, assetsSrc.TexturesSrc)
+	err = a.loadTextures(glCtx, assetsSrc.TexturesSrc)
+	if err != nil {
+		return err
+	}
 
 	return loadErr
+}
+
+func (a *AssetsManager) loadAssetsConfig(assetsConfig string) (*AssetsSources, error) {
+	var (
+		loadErr   error
+		assetsSrc AssetsSources
+	)
+
+	done := make(chan struct{}, 0)
+
+	resourceloader.LoadFile(assetsConfig,
+		func(src js.Value) {
+			loadErr = utils.ParseStringToJSON(src.String(), &assetsSrc)
+			close(done)
+		},
+		func(err error) {
+			loadErr = err
+			close(done)
+		})
+
+	<-done
+
+	if loadErr != nil {
+		return nil, loadErr
+	}
+
+	return &assetsSrc, nil
 }
 
 func (a *AssetsManager) loadMetadata(srcPaths map[string]string) error {
@@ -101,7 +130,7 @@ func (a *AssetsManager) loadTextures(glCtx *webgl.GLContext, srcPaths map[string
 
 	resourceloader.LoadImages(srcPaths,
 		func(name string, img js.Value) {
-			a.addTexture(name, texture.NewTexture(glCtx.GL, img))
+			a.addTexture(name, webgl.NewTexture(glCtx.GL, img))
 			wg.Done()
 		},
 		func(err error) {
@@ -136,14 +165,14 @@ func (a *AssetsManager) GetMetadata(name string) *js.Value {
 	return a.metadata[name]
 }
 
-func (a *AssetsManager) addTexture(name string, texture *texture.Texture) {
+func (a *AssetsManager) addTexture(name string, texture *webgl.Texture) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
 	a.textures[name] = texture
 }
 
-func (a *AssetsManager) GetTexture(name string) *texture.Texture {
+func (a *AssetsManager) GetTexture(name string) *webgl.Texture {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 

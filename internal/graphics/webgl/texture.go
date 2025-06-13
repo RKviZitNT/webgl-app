@@ -1,6 +1,6 @@
 //go:build js
 
-package texture
+package webgl
 
 import (
 	"syscall/js"
@@ -41,6 +41,6 @@ func (t *Texture) GetTexture() *js.Value {
 	return &t.texture
 }
 
-func (t *Texture) Size() primitives.Vec2 {
+func (t *Texture) Size() *primitives.Vec2 {
 	return primitives.NewVec2(float64(t.width), float64(t.height))
 }

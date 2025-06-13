@@ -5,43 +5,37 @@ package webgl
 import (
 	"fmt"
 	"syscall/js"
+	"webgl-app/internal/config"
 	"webgl-app/internal/graphics/primitives"
 	"webgl-app/internal/jsfunc"
 	"webgl-app/internal/resourceloader"
 )
 
 type GLContext struct {
-	Canvas     js.Value
-	CanvasRect primitives.Rect
-	GL         js.Value
-	Program    js.Value
-	drawQueue  []DrawCommand
+	GL        js.Value
+	Program   js.Value
+	Screen    *Screen
+	drawQueue []DrawCommand
 }
 
-func NewWebGLCtx(canvasID string) (*GLContext, error) {
-	canvas := js.Global().Get("document").Call("getElementById", canvasID)
-	if canvas.IsUndefined() || canvas.IsNull() {
-		return nil, fmt.Errorf("NewWebGLCtx: canvas is nil")
+func NewWebGLContext(canvasId string) (*GLContext, error) {
+	screen, err := NewScreen(canvasId, primitives.NewRect(primitives.NewVec2(0, 0), primitives.NewVec2(config.GlobalConfig.Window.Width, config.GlobalConfig.Window.Height)))
+	if err != nil {
+		return nil, err
 	}
 
-	width := js.Global().Get("innerWidth").Float()
-	height := js.Global().Get("innerHeight").Float()
-	canvas.Set("width", width)
-	canvas.Set("height", height)
-
-	gl := canvas.Call("getContext", "webgl")
+	gl := screen.Canvas.Call("getContext", "webgl")
 	if gl.IsNull() {
-		gl = canvas.Call("getContext", "experimental-webgl")
+		gl = screen.Canvas.Call("getContext", "experimental-webgl")
 		if gl.IsNull() {
 			return nil, fmt.Errorf("WebGL not supported")
 		}
 	}
 
 	return &GLContext{
-		Canvas:     canvas,
-		CanvasRect: primitives.NewRect(primitives.NewVec2(0, 0), primitives.NewVec2(width, height)),
-		GL:         gl,
-		drawQueue:  make([]DrawCommand, 0),
+		GL:        gl,
+		Screen:    screen,
+		drawQueue: make([]DrawCommand, 0),
 	}, nil
 }
 

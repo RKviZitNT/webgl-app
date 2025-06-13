@@ -1,12 +1,12 @@
 package primitives
 
 type Rect struct {
-	Pos  Vec2
-	Size Vec2
+	Pos  *Vec2
+	Size *Vec2
 }
 
-func NewRect(pos Vec2, size Vec2) Rect {
-	return Rect{
+func NewRect(pos *Vec2, size *Vec2) *Rect {
+	return &Rect{
 		Pos:  pos,
 		Size: size,
 	}
@@ -28,11 +28,28 @@ func (r *Rect) Bottom() float64 {
 	return r.Pos.Y + r.Size.Y
 }
 
-func (r *Rect) Center() Vec2 {
-	return Vec2{
-		X: r.Pos.X + r.Size.X/2,
-		Y: r.Pos.Y + r.Size.Y/2,
-	}
+func (r *Rect) Center() *Vec2 {
+	return NewVec2(r.Pos.X+r.Size.X/2, r.Pos.Y+r.Size.Y/2)
+}
+
+func (r *Rect) SetLeft(x float64) {
+	r.Pos.X = x
+}
+
+func (r *Rect) SetRight(x float64) {
+	r.Pos.X = x - r.Size.X
+}
+
+func (r *Rect) SetTop(y float64) {
+	r.Pos.Y = y
+}
+
+func (r *Rect) SetBottom(y float64) {
+	r.Pos.Y = y - r.Size.Y
+}
+
+func (r *Rect) SetCenter(pos *Vec2) {
+	r.Pos = NewVec2(pos.X-(r.Size.X/2), pos.Y-(r.Size.Y/2))
 }
 
 func (r *Rect) Width() float64 {
@@ -43,8 +60,8 @@ func (r *Rect) Height() float64 {
 	return r.Size.Y
 }
 
-func (r *Rect) Move(offset Vec2) {
-	r.Pos.AddVec2(offset)
+func (r *Rect) Move(offset *Vec2) *Rect {
+	return NewRect(r.Pos.AddVec2(offset), r.Size)
 }
 
 func (r *Rect) Intersection(other Rect) bool {

@@ -4,7 +4,7 @@ package character
 
 import (
 	"webgl-app/internal/graphics/animation"
-	"webgl-app/internal/graphics/sprite"
+	"webgl-app/internal/graphics/webgl"
 )
 
 type CharacterName string
@@ -15,11 +15,11 @@ const (
 
 type Character struct {
 	Name       CharacterName
-	Sprite     *sprite.Sprite
+	Sprite     *webgl.Sprite
 	Animations map[animation.AnimationType]*animation.Animation
 }
 
-func NewCharacter(name CharacterName, sprite *sprite.Sprite) *Character {
+func NewCharacter(name CharacterName, sprite *webgl.Sprite) *Character {
 	return &Character{
 		Name:       name,
 		Sprite:     sprite,

@@ -3,27 +3,36 @@
 package main
 
 import (
-	"syscall/js"
+	"webgl-app/internal/config"
 	"webgl-app/internal/graphics/webgl"
+	"webgl-app/internal/jsfunc"
 	"webgl-app/internal/net/clienthandler"
 )
 
 func main() {
-	GLContext, err := webgl.NewWebGLCtx("game_canvas")
+	var err error
+
+	jsfunc.LogInfo(" ----- Loading global config ----- ")
+	err = config.LoadConfig("config.json")
 	if err != nil {
-		js.Global().Get("console").Call("error", err.Error())
-		return
+		jsfunc.LogError(err.Error())
 	}
 
+	jsfunc.LogInfo(" ----- Init WebGL ----- ")
+	GLContext, err := webgl.NewWebGLContext("game_canvas")
+	if err != nil {
+		jsfunc.LogError(err.Error())
+		return
+	}
 	err = GLContext.InitWebGL()
 	if err != nil {
-		js.Global().Get("console").Call("error", err.Error())
+		jsfunc.LogError(err.Error())
 		return
 	}
 
 	err = clienthandler.InitGame(GLContext)
 	if err != nil {
-		js.Global().Get("console").Call("error", err.Error())
+		jsfunc.LogError(err.Error())
 		return
 	}
 

@@ -151,28 +151,29 @@ func (ws *WebSocket) handleStartGame(player *player.Player) {
 		return
 	}
 
+	positions := []*primitives.Rect{
+		primitives.NewRect(
+			primitives.NewVec2(100, 300),
+			primitives.NewVec2(100, 160),
+		),
+		primitives.NewRect(
+			primitives.NewVec2(500, 300),
+			primitives.NewVec2(100, 160),
+		),
+	}
 	ids := make([]string, 0, 2)
 	for id := range room.GetPlayers() {
 		ids = append(ids, id)
 	}
 
 	fightersInfo := make([]message.FighterInfo, 0, len(ids))
-	fightersInfo = append(fightersInfo, message.FighterInfo{
-		ID:            ids[0],
-		CharacterName: "warrior",
-		Collider: primitives.NewRect(
-			primitives.NewVec2(100, 300),
-			primitives.NewVec2(60, 40),
-		),
-	})
-	fightersInfo = append(fightersInfo, message.FighterInfo{
-		ID:            ids[1],
-		CharacterName: "warrior",
-		Collider: primitives.NewRect(
-			primitives.NewVec2(500, 300),
-			primitives.NewVec2(60, 40),
-		),
-	})
+	for i, id := range ids {
+		fightersInfo = append(fightersInfo, message.FighterInfo{
+			ID:            id,
+			CharacterName: "warrior",
+			Collider:      positions[i],
+		})
+	}
 
 	room.Broadcast(message.Message{
 		Type: message.StartGameMsg,

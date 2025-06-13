@@ -2,14 +2,12 @@
 
 package webgl
 
-import "webgl-app/internal/graphics/texture"
-
 type DrawCommand struct {
 	BufferData []float32
-	Texture    *texture.Texture
+	Texture    *Texture
 }
 
-func (ctx *GLContext) addDrawCommand(bufferData []float32, texture *texture.Texture) {
+func (ctx *GLContext) addDrawCommand(bufferData []float32, texture *Texture) {
 	ctx.drawQueue = append(ctx.drawQueue, DrawCommand{
 		BufferData: bufferData,
 		Texture:    texture,
@@ -28,7 +26,7 @@ func (ctx *GLContext) FlushDrawQueue() {
 		return
 	}
 
-	gl.Call("viewport", 0, 0, ctx.CanvasRect.Width(), ctx.CanvasRect.Height())
+	gl.Call("viewport", ctx.Screen.ScreenRect.Left(), ctx.Screen.ScreenRect.Top(), ctx.Screen.ScreenRect.Width(), ctx.Screen.ScreenRect.Height())
 	gl.Call("clearColor", 0.9, 0.9, 0.9, 1.0)
 	gl.Call("clear", gl.Get("COLOR_BUFFER_BIT"))
 	gl.Call("useProgram", program)
@@ -50,7 +48,7 @@ func (ctx *GLContext) FlushDrawQueue() {
 		gl.Call("enableVertexAttribArray", texAttrib)
 
 		resUniform := gl.Call("getUniformLocation", program, "u_resolution")
-		gl.Call("uniform2f", resUniform, ctx.CanvasRect.Width(), ctx.CanvasRect.Height())
+		gl.Call("uniform2f", resUniform, ctx.Screen.ScreenRect.Width(), ctx.Screen.ScreenRect.Height())
 
 		gl.Call("activeTexture", gl.Get("TEXTURE0"))
 		gl.Call("bindTexture", gl.Get("TEXTURE_2D"), *cmd.Texture.GetTexture())

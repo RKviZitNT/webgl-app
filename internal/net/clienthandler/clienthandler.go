@@ -26,6 +26,8 @@ func RegisterCallbacks() {
 	js.Global().Set("leaveLobby", js.FuncOf(leaveLobby))
 	js.Global().Set("startGame", js.FuncOf(startGame))
 
+	jsfunc.LogInfo(" ----- Connecting to WebSocket ----- ")
+
 	js.Global().Call("setLoadingProgress", 100, "Initialization...")
 	connectWebSocket()
 
@@ -78,7 +80,7 @@ func createLobby(this js.Value, args []js.Value) interface{} {
 		Type: message.CreateRoomMsg,
 		Data: room.RoomSettings{
 			MaxPlayers:  2,
-			NeedPlayers: 2,
+			NeedPlayers: 1,
 		},
 	}
 
