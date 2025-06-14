@@ -40,11 +40,18 @@ type RoomInfo struct {
 	NeedPlayers  int
 }
 
+type FighterControl struct {
+	MoveLeft  bool
+	MoveRight bool
+	Jump      bool
+	Attack    bool
+}
+
 type FighterInfo struct {
 	ID            string
 	CharacterName string
-	State         string
 	Collider      primitives.Rect
+	Control       FighterControl
 }
 
 type StartGameData struct {

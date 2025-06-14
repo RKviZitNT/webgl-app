@@ -9,6 +9,8 @@ import (
 	"webgl-app/internal/graphics/animation"
 	"webgl-app/internal/graphics/primitives"
 	"webgl-app/internal/graphics/webgl"
+	"webgl-app/internal/jsfunc"
+	"webgl-app/internal/net/message"
 )
 
 type FighterState string
@@ -44,6 +46,7 @@ type Fighter struct {
 	Character      *character.Character
 	Animation      animation.Animation
 	Propertys      FighterPropertys
+	Control        *message.FighterControl
 }
 
 func NewFighter(char *character.Character, collider primitives.Rect) *Fighter {
@@ -54,6 +57,10 @@ func NewFighter(char *character.Character, collider primitives.Rect) *Fighter {
 		velocity:    0,
 		gravity:     5000,
 		attackRange: 100,
+		jump:        false,
+		move:        false,
+		attack1:     false,
+		attack2:     false,
 	}
 
 	fighter := Fighter{
@@ -61,21 +68,19 @@ func NewFighter(char *character.Character, collider primitives.Rect) *Fighter {
 		AttackCollider: primitives.NewRect(0, 0, collider.Width()/2+propertys.attackRange, collider.Height()),
 		Character:      char,
 		Propertys:      propertys,
+		Control:        nil,
 	}
-	fighter.setState(Idle)
+	fighter.SetState(Idle)
 
 	return &fighter
 }
 
-func (f *Fighter) setState(state FighterState) {
+func (f *Fighter) SetState(state FighterState) {
 	if f.State != state {
 		f.State = state
+		jsfunc.LogInfo(f.Collider.Pos.X)
 		f.Animation = *f.Character.Animations[string(state)]
 	}
-}
-
-func (f *Fighter) setAnimation(state FighterState) {
-	f.Animation = *f.Character.Animations[string(state)]
 }
 
 func (f *Fighter) Draw(glCtx *webgl.GLContext) {
@@ -90,19 +95,41 @@ func (f *Fighter) Update(keys map[string]bool, deltaTime time.Duration) {
 
 	var dx, dy float64
 
-	f.Propertys.move = false
-	if keys["KeyD"] {
+	moveLeft := func() {
 		dx = 1
 		f.Propertys.Specular = false
 		f.Propertys.move = true
 	}
-	if keys["KeyA"] {
+	moveRight := func() {
 		dx = -1
 		f.Propertys.Specular = true
 		f.Propertys.move = true
 	}
-	if keys["Space"] {
+	jump := func() {
 		f.jump()
+	}
+
+	f.Propertys.move = false
+	if f.Control == nil {
+		if keys["KeyD"] {
+			moveLeft()
+		}
+		if keys["KeyA"] {
+			moveRight()
+		}
+		if keys["Space"] {
+			jump()
+		}
+	} else {
+		if f.Control.MoveLeft {
+			moveLeft()
+		}
+		if f.Control.MoveRight {
+			moveRight()
+		}
+		if f.Control.Jump {
+			jump()
+		}
 	}
 
 	f.move(dx, dy, deltaTime.Seconds())
@@ -140,15 +167,15 @@ func (f *Fighter) attack() {
 
 func (f *Fighter) handleState() {
 	if f.Propertys.jump {
-		f.setState(Jump)
+		f.SetState(Jump)
 	} else if f.Propertys.attack1 {
-		f.setState(Attack1)
+		f.SetState(Attack1)
 	} else if f.Propertys.attack2 {
-		f.setState(Attack2)
+		f.SetState(Attack2)
 	} else if f.Propertys.move {
-		f.setState(Walk)
+		f.SetState(Walk)
 	} else {
-		f.setState(Idle)
+		f.SetState(Idle)
 	}
 }
 
