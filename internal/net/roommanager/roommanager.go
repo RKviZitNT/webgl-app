@@ -29,13 +29,13 @@ func (rm *RoomManager) CreateRoom(ownerID string, settings room.RoomSettings) (s
 		return "", err
 	}
 
-	room := room.NewRoom(roomCode, settings)
-	room.SetOwnerID(ownerID)
+	_room := room.NewRoom(roomCode, settings)
+	_room.SetOwnerID(ownerID)
 
 	rm.mu.Lock()
 	defer rm.mu.Unlock()
 
-	rm.rooms[roomCode] = room
+	rm.rooms[roomCode] = _room
 
 	return roomCode, nil
 }
@@ -56,36 +56,36 @@ func (rm *RoomManager) DeleteRoom(roomCode string) error {
 	return nil
 }
 
-func (rm *RoomManager) JoinRoom(player *player.Player, roomCode string) error {
+func (rm *RoomManager) JoinRoom(_player *player.Player, roomCode string) error {
 	rm.mu.Lock()
-	room, exists := rm.rooms[roomCode]
+	_room, exists := rm.rooms[roomCode]
 	rm.mu.Unlock()
 
 	if !exists {
 		return fmt.Errorf("room  not found")
 	}
 
-	if err := room.AddPlayer(player); err != nil {
+	if err := _room.AddPlayer(_player); err != nil {
 		return err
 	}
-	player.SetRoomID(roomCode)
+	_player.SetRoomID(roomCode)
 
 	return nil
 }
 
-func (rm *RoomManager) KickFromRoom(player *player.Player, roomCode string) error {
+func (rm *RoomManager) KickFromRoom(_player *player.Player, roomCode string) error {
 	rm.mu.Lock()
-	room, exists := rm.rooms[roomCode]
+	_room, exists := rm.rooms[roomCode]
 	rm.mu.Unlock()
 
 	if !exists {
 		return fmt.Errorf("room not found")
 	}
 
-	if err := room.RemovePlayer(player); err != nil {
+	if err := _room.RemovePlayer(_player); err != nil {
 		return err
 	}
-	player.SetRoomID("")
+	_player.SetRoomID("")
 
 	return nil
 }
@@ -94,12 +94,12 @@ func (rm *RoomManager) GetRoom(roomCode string) (*room.Room, error) {
 	rm.mu.Lock()
 	defer rm.mu.Unlock()
 
-	room, exists := rm.rooms[roomCode]
+	_room, exists := rm.rooms[roomCode]
 	if !exists {
 		return nil, fmt.Errorf("room not found")
 	}
 
-	return room, nil
+	return _room, nil
 }
 
 func (rm *RoomManager) generateRoomCode(lenght int) (string, error) {

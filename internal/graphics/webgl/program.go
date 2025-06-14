@@ -7,12 +7,12 @@ import (
 	"syscall/js"
 )
 
-func (ctx *GLContext) createProgram(vertexShader, fragmentShader js.Value) (js.Value, error) {
+func (ctx *GLContext) createProgram(vertShader, fragShader js.Value) (js.Value, error) {
 	gl := ctx.GL
 
 	program := gl.Call("createProgram")
-	gl.Call("attachShader", program, vertexShader)
-	gl.Call("attachShader", program, fragmentShader)
+	gl.Call("attachShader", program, vertShader)
+	gl.Call("attachShader", program, fragShader)
 	gl.Call("linkProgram", program)
 
 	if !gl.Call("getProgramParameter", program, gl.Get("LINK_STATUS")).Bool() {

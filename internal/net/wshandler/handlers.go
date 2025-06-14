@@ -8,48 +8,48 @@ import (
 	"webgl-app/internal/utils"
 )
 
-func (ws *WebSocket) handleMessage(player *player.Player, msg message.Message) {
+func (ws *WebSocket) handleMessage(_player *player.Player, msg message.Message) {
 	switch msg.Type {
 	case message.CreateRoomMsg:
-		ws.handleCreateRoom(player, msg)
+		ws.handleCreateRoom(_player, msg)
 	case message.JoinRoomMsg:
-		ws.handleJoinRoom(player, msg)
+		ws.handleJoinRoom(_player, msg)
 	case message.LeaveRoomMsg:
-		ws.handleLeaveRoom(player)
+		ws.handleLeaveRoom(_player)
 	case message.StartGameMsg:
-		ws.handleStartGame(player)
+		ws.handleStartGame(_player)
 	case message.EndGameMsg:
-		ws.handleEndGame(player)
+		ws.handleEndGame(_player)
 	case message.UpdateRoomInfoMsg:
-		ws.handleUpdateRoomInfo(player)
+		ws.handleUpdateRoomInfo(_player)
 	case message.UpdatePlayerInfoMsg:
-		ws.handleUpdatePlayerInfo(player)
+		ws.handleUpdatePlayerInfo(_player)
 	case message.GameStateMsg:
-		ws.handlerGameState(player, msg)
+		ws.handlerGameState(_player, msg)
 	default:
-		player.Send(message.Message{
+		_player.Send(message.Message{
 			Type: message.ErrorMsg,
 			Data: "unknown message type",
 		})
 	}
 }
 
-func (ws *WebSocket) handleCreateRoom(player *player.Player, msg message.Message) {
+func (ws *WebSocket) handleCreateRoom(_player *player.Player, msg message.Message) {
 	var settings room.RoomSettings
 	utils.ParseInterfaceToJSON(msg.Data, &settings)
 
-	roomCode, err := ws.rm.CreateRoom(player.ID(), settings)
+	roomCode, err := ws.rm.CreateRoom(_player.ID(), settings)
 	if err != nil {
-		player.Send(message.Message{
+		_player.Send(message.Message{
 			Type: message.ErrorMsg,
 			Data: err.Error(),
 		})
 		return
 	}
 
-	err = ws.rm.JoinRoom(player, roomCode)
+	err = ws.rm.JoinRoom(_player, roomCode)
 	if err != nil {
-		player.Send(message.Message{
+		_player.Send(message.Message{
 			Type: message.ErrorMsg,
 			Data: err.Error(),
 		})
@@ -57,94 +57,94 @@ func (ws *WebSocket) handleCreateRoom(player *player.Player, msg message.Message
 		return
 	}
 
-	player.Send(message.Message{
+	_player.Send(message.Message{
 		Type: message.CreateRoomMsg,
 		Data: nil,
 	})
 }
 
-func (ws *WebSocket) handleJoinRoom(player *player.Player, msg message.Message) {
+func (ws *WebSocket) handleJoinRoom(_player *player.Player, msg message.Message) {
 	roomCode := msg.Data.(string)
 
-	err := ws.rm.JoinRoom(player, roomCode)
+	err := ws.rm.JoinRoom(_player, roomCode)
 	if err != nil {
-		player.Send(message.Message{
+		_player.Send(message.Message{
 			Type: message.ErrorMsg,
 			Data: err.Error(),
 		})
 		return
 	}
 
-	room, _ := ws.rm.GetRoom(roomCode)
-	player.Send(message.Message{
+	_room, _ := ws.rm.GetRoom(roomCode)
+	_player.Send(message.Message{
 		Type: message.JoinRoomMsg,
 		Data: nil,
 	})
 
-	room.Broadcast(message.Message{
+	_room.Broadcast(message.Message{
 		Type: message.PlayerJoinMsg,
-		Data: player.GetName(),
-	}, player.ID())
+		Data: _player.GetName(),
+	}, _player.ID())
 }
 
-func (ws *WebSocket) handleLeaveRoom(player *player.Player) {
-	roomCode := player.GetRoomID()
+func (ws *WebSocket) handleLeaveRoom(_player *player.Player) {
+	roomCode := _player.GetRoomID()
 	if roomCode == "" {
-		player.Send(message.Message{
+		_player.Send(message.Message{
 			Type: message.ErrorMsg,
 			Data: "player is not in any room",
 		})
 		return
 	}
 
-	room, err := ws.rm.GetRoom(roomCode)
+	_room, err := ws.rm.GetRoom(roomCode)
 	if err != nil {
-		player.Send(message.Message{
+		_player.Send(message.Message{
 			Type: message.ErrorMsg,
 			Data: err.Error(),
 		})
 		return
 	}
 
-	if err := ws.rm.KickFromRoom(player, roomCode); err != nil {
-		player.Send(message.Message{
+	if err := ws.rm.KickFromRoom(_player, roomCode); err != nil {
+		_player.Send(message.Message{
 			Type: message.ErrorMsg,
 			Data: err.Error(),
 		})
 		return
 	}
-	player.Send(message.Message{
+	_player.Send(message.Message{
 		Type: message.LeaveRoomMsg,
 		Data: nil,
 	})
 
-	if room.GetOwnerID() == player.ID() {
+	if _room.GetOwnerID() == _player.ID() {
 		ws.rm.DeleteRoom(roomCode)
-		room.Broadcast(message.Message{
+		_room.Broadcast(message.Message{
 			Type: message.RoomClosedMsg,
 			Data: "the owner has closed the room",
-		}, player.ID())
+		}, _player.ID())
 	} else {
-		room.Broadcast(message.Message{
+		_room.Broadcast(message.Message{
 			Type: message.PlayerLeftMsg,
-			Data: player.ID(),
+			Data: _player.ID(),
 		}, nil)
 	}
 }
 
-func (ws *WebSocket) handleStartGame(player *player.Player) {
-	roomCode := player.GetRoomID()
+func (ws *WebSocket) handleStartGame(_player *player.Player) {
+	roomCode := _player.GetRoomID()
 	if roomCode == "" {
-		player.Send(message.Message{
+		_player.Send(message.Message{
 			Type: message.ErrorMsg,
 			Data: "Player is not in any room",
 		})
 		return
 	}
 
-	room, err := ws.rm.GetRoom(roomCode)
+	_room, err := ws.rm.GetRoom(roomCode)
 	if err != nil {
-		player.Send(message.Message{
+		_player.Send(message.Message{
 			Type: message.ErrorMsg,
 			Data: err.Error(),
 		})
@@ -156,7 +156,7 @@ func (ws *WebSocket) handleStartGame(player *player.Player) {
 		primitives.NewRect(500, 550, 100, 160),
 	}
 	ids := make([]string, 0, 2)
-	for id := range room.GetPlayers() {
+	for id := range _room.GetPlayers() {
 		ids = append(ids, id)
 	}
 
@@ -169,7 +169,7 @@ func (ws *WebSocket) handleStartGame(player *player.Player) {
 		})
 	}
 
-	room.Broadcast(message.Message{
+	_room.Broadcast(message.Message{
 		Type: message.StartGameMsg,
 		Data: message.StartGameData{
 			FightersInfo: fightersInfo,
@@ -177,81 +177,81 @@ func (ws *WebSocket) handleStartGame(player *player.Player) {
 	}, nil)
 }
 
-func (ws *WebSocket) handleEndGame(player *player.Player) {
-	roomCode := player.GetRoomID()
+func (ws *WebSocket) handleEndGame(_player *player.Player) {
+	roomCode := _player.GetRoomID()
 	if roomCode == "" {
-		player.Send(message.Message{
+		_player.Send(message.Message{
 			Type: message.ErrorMsg,
 			Data: "Player is not in any room",
 		})
 		return
 	}
 
-	room, err := ws.rm.GetRoom(roomCode)
+	_room, err := ws.rm.GetRoom(roomCode)
 	if err != nil {
-		player.Send(message.Message{
+		_player.Send(message.Message{
 			Type: message.ErrorMsg,
 			Data: err.Error(),
 		})
 		return
 	}
 
-	room.Broadcast(message.Message{
+	_room.Broadcast(message.Message{
 		Type: message.EndGameMsg,
 		Data: nil,
 	}, nil)
 }
 
-func (ws *WebSocket) handleUpdateRoomInfo(player *player.Player) {
-	roomCode := player.GetRoomID()
+func (ws *WebSocket) handleUpdateRoomInfo(_player *player.Player) {
+	roomCode := _player.GetRoomID()
 	if roomCode == "" {
-		player.Send(message.Message{
+		_player.Send(message.Message{
 			Type: message.ErrorMsg,
 			Data: "Player is not in any room",
 		})
 		return
 	}
 
-	room, err := ws.rm.GetRoom(roomCode)
+	_room, err := ws.rm.GetRoom(roomCode)
 	if err != nil {
-		player.Send(message.Message{
+		_player.Send(message.Message{
 			Type: message.ErrorMsg,
 			Data: err.Error(),
 		})
 		return
 	}
 
-	player.Send(message.Message{
+	_player.Send(message.Message{
 		Type: message.UpdateRoomInfoMsg,
-		Data: room.RoomInfo(),
+		Data: _room.RoomInfo(),
 	})
 }
 
-func (ws *WebSocket) handleUpdatePlayerInfo(player *player.Player) {
-	player.Send(message.Message{
+func (ws *WebSocket) handleUpdatePlayerInfo(_player *player.Player) {
+	_player.Send(message.Message{
 		Type: message.UpdatePlayerInfoMsg,
-		Data: player.PlayerInfo(),
+		Data: _player.PlayerInfo(),
 	})
 }
 
-func (ws *WebSocket) handlerGameState(player *player.Player, msg message.Message) {
-	roomCode := player.GetRoomID()
+func (ws *WebSocket) handlerGameState(_player *player.Player, msg message.Message) {
+	roomCode := _player.GetRoomID()
 	if roomCode == "" {
-		player.Send(message.Message{
+		_player.Send(message.Message{
 			Type: message.ErrorMsg,
 			Data: "Player is not in any room",
 		})
 		return
 	}
 
-	room, err := ws.rm.GetRoom(roomCode)
+	_room, err := ws.rm.GetRoom(roomCode)
 	if err != nil {
-		player.Send(message.Message{
+		_player.Send(message.Message{
 			Type: message.ErrorMsg,
 			Data: err.Error(),
 		})
 		return
 	}
 
-	room.Broadcast(msg, player.ID())
+	_room.Broadcast(msg, _player.ID())
 }

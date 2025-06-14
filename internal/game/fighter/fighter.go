@@ -46,7 +46,7 @@ type Fighter struct {
 	Propertys      FighterPropertys
 }
 
-func NewFighter(character *character.Character, collider primitives.Rect) *Fighter {
+func NewFighter(char *character.Character, collider primitives.Rect) *Fighter {
 	propertys := FighterPropertys{
 		dir:         primitives.Vec2{},
 		jumpSpeed:   1500,
@@ -59,7 +59,7 @@ func NewFighter(character *character.Character, collider primitives.Rect) *Fight
 	fighter := Fighter{
 		Collider:       collider,
 		AttackCollider: primitives.NewRect(0, 0, collider.Width()/2+propertys.attackRange, collider.Height()),
-		Character:      character,
+		Character:      char,
 		Propertys:      propertys,
 	}
 	fighter.setState(Idle)

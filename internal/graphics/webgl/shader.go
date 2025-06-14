@@ -9,7 +9,7 @@ import (
 	"webgl-app/internal/resourceloader"
 )
 
-func (ctx *GLContext) compileShaders(vertexSrc, fragmentSrc string) (js.Value, js.Value, error) {
+func (ctx *GLContext) compileShaders(vertSrc, fragSrc string) (js.Value, js.Value, error) {
 	gl := ctx.GL
 
 	compileShader := func(source string, shaderType js.Value) (js.Value, error) {
@@ -24,35 +24,35 @@ func (ctx *GLContext) compileShaders(vertexSrc, fragmentSrc string) (js.Value, j
 		return shader, nil
 	}
 
-	vertexShader, err := compileShader(vertexSrc, gl.Get("VERTEX_SHADER"))
+	vertShader, err := compileShader(vertSrc, gl.Get("VERTEX_SHADER"))
 	if err != nil {
 		return js.Null(), js.Null(), fmt.Errorf("vertex shader error: %v", err)
 	}
 
-	fragmentShader, err := compileShader(fragmentSrc, gl.Get("FRAGMENT_SHADER"))
+	fragShader, err := compileShader(fragSrc, gl.Get("FRAGMENT_SHADER"))
 	if err != nil {
 		return js.Null(), js.Null(), fmt.Errorf("fragment shader error: %v", err)
 	}
 
-	return vertexShader, fragmentShader, nil
+	return vertShader, fragShader, nil
 }
 
 func (ctx *GLContext) loadShaders(shaders config.Shaders) (string, string, error) {
 	var (
-		loadErr     error
-		vertexSrc   string
-		fragmentSrc string
+		loadErr error
+		vertSrc string
+		fragSrc string
 	)
 
 	done := make(chan struct{}, 0)
 
 	resourceloader.LoadFile(shaders.Vertex,
 		func(src js.Value) {
-			vertexSrc = src.String()
+			vertSrc = src.String()
 
 			resourceloader.LoadFile(shaders.Fragment,
 				func(src js.Value) {
-					fragmentSrc = src.String()
+					fragSrc = src.String()
 					close(done)
 				},
 				func(err error) {
@@ -71,5 +71,5 @@ func (ctx *GLContext) loadShaders(shaders config.Shaders) (string, string, error
 		return "", "", loadErr
 	}
 
-	return vertexSrc, fragmentSrc, nil
+	return vertSrc, fragSrc, nil
 }

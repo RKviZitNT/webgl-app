@@ -37,8 +37,8 @@ type Animation struct {
 	isEnd           bool
 }
 
-func NewAnimation(aName string, data AnimationsData, texture *webgl.Texture, scale float64, offset primitives.Vec2, specularOffset primitives.Vec2) *Animation {
-	if texture == nil {
+func NewAnimation(aName string, data AnimationsData, tex *webgl.Texture, scale float64, offset primitives.Vec2, specularOffset primitives.Vec2) *Animation {
+	if tex == nil {
 		return nil
 	}
 
@@ -58,7 +58,7 @@ func NewAnimation(aName string, data AnimationsData, texture *webgl.Texture, sca
 
 		rect := primitives.NewRect(float64(col*frameWidth), float64(row*frameHeight), float64(frameWidth), float64(frameHeight))
 
-		frames = append(frames, webgl.NewSprite(texture, &rect, scale, offset, specularOffset))
+		frames = append(frames, webgl.NewSprite(tex, &rect, scale, offset, specularOffset))
 	}
 
 	return &Animation{
@@ -69,7 +69,7 @@ func NewAnimation(aName string, data AnimationsData, texture *webgl.Texture, sca
 	}
 }
 
-func NewAnimationsSet(metadata string, texture *webgl.Texture, scale float64, offset primitives.Vec2, specularOffset primitives.Vec2) (map[string]*Animation, error) {
+func NewAnimationsSet(metadata string, tex *webgl.Texture, scale float64, offset primitives.Vec2, specularOffset primitives.Vec2) (map[string]*Animation, error) {
 	var data AnimationsData
 	err := utils.ParseStringToJSON(metadata, &data)
 	if err != nil {
@@ -78,7 +78,7 @@ func NewAnimationsSet(metadata string, texture *webgl.Texture, scale float64, of
 
 	animations := make(map[string]*Animation)
 	for aName, _ := range data.Animations {
-		animations[aName] = NewAnimation(aName, data, texture, scale, offset, specularOffset)
+		animations[aName] = NewAnimation(aName, data, tex, scale, offset, specularOffset)
 	}
 	return animations, nil
 }

@@ -26,10 +26,10 @@ func newTextureQueue(program js.Value) *textureQueue {
 	}
 }
 
-func (tq *textureQueue) addCommand(bufferData []float32, texture *Texture) {
+func (tq *textureQueue) addCommand(bufferData []float32, tex *Texture) {
 	tq.queue = append(tq.queue, textureCommand{
 		bufferData: bufferData,
-		texture:    texture,
+		texture:    tex,
 	})
 }
 
@@ -52,10 +52,10 @@ func newDebugQueue(program js.Value) *debugQueue {
 	}
 }
 
-func (dq *debugQueue) addCommand(bufferData []float32, color Color) {
+func (dq *debugQueue) addCommand(bufferData []float32, col Color) {
 	dq.queue = append(dq.queue, debugCommand{
 		bufferData: bufferData,
-		color:      color,
+		color:      col,
 	})
 }
 

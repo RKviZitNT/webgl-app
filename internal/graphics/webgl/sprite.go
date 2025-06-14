@@ -14,9 +14,9 @@ type Sprite struct {
 	SpecularOffset primitives.Vec2
 }
 
-func NewSprite(texture *Texture, rect *primitives.Rect, scale float64, offset primitives.Vec2, specularOffset primitives.Vec2) *Sprite {
+func NewSprite(tex *Texture, rect *primitives.Rect, scale float64, offset primitives.Vec2, specularOffset primitives.Vec2) *Sprite {
 	return &Sprite{
-		Texture:        texture,
+		Texture:        tex,
 		Rect:           rect,
 		Scale:          scale,
 		Offset:         offset,

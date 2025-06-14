@@ -27,10 +27,10 @@ func NewCharacter(name CharacterName, sprite *webgl.Sprite) *Character {
 	}
 }
 
-func (c *Character) AddAnimation(aType string, animation *animation.Animation) {
-	c.Animations[aType] = animation
+func (c *Character) AddAnimation(aType string, anim *animation.Animation) {
+	c.Animations[aType] = anim
 }
 
-func (c *Character) SetAnimations(animations map[string]*animation.Animation) {
-	c.Animations = animations
+func (c *Character) SetAnimations(anims map[string]*animation.Animation) {
+	c.Animations = anims
 }
