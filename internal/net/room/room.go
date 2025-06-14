@@ -46,11 +46,11 @@ func (r *Room) ID() string {
 	return r.id
 }
 
-func (r *Room) RoomInfo() *message.RoomInfo {
+func (r *Room) RoomInfo() message.RoomInfo {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	return &message.RoomInfo{
+	return message.RoomInfo{
 		ID:           r.id,
 		Status:       string(r.status),
 		OwnerId:      r.ownerID,

@@ -6,8 +6,8 @@ type Color struct {
 	R, G, B, A float64
 }
 
-func ColorBlack(a float64) *Color {
-	return &Color{
+func ColorBlack(a float64) Color {
+	return Color{
 		R: 0,
 		G: 0,
 		B: 0,
@@ -15,8 +15,8 @@ func ColorBlack(a float64) *Color {
 	}
 }
 
-func ColorWhite(a float64) *Color {
-	return &Color{
+func ColorWhite(a float64) Color {
+	return Color{
 		R: 1,
 		G: 1,
 		B: 1,
@@ -24,8 +24,8 @@ func ColorWhite(a float64) *Color {
 	}
 }
 
-func ColorRed(a float64) *Color {
-	return &Color{
+func ColorRed(a float64) Color {
+	return Color{
 		R: 1,
 		G: 0,
 		B: 0,
@@ -33,8 +33,8 @@ func ColorRed(a float64) *Color {
 	}
 }
 
-func ColorGreen(a float64) *Color {
-	return &Color{
+func ColorGreen(a float64) Color {
+	return Color{
 		R: 0,
 		G: 1,
 		B: 0,
@@ -42,8 +42,8 @@ func ColorGreen(a float64) *Color {
 	}
 }
 
-func ColorBlue(a float64) *Color {
-	return &Color{
+func ColorBlue(a float64) Color {
+	return Color{
 		R: 0,
 		G: 0,
 		B: 1,

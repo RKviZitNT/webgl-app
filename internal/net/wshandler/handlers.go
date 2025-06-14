@@ -8,7 +8,7 @@ import (
 	"webgl-app/internal/utils"
 )
 
-func (ws *WebSocket) handleMessage(player *player.Player, msg *message.Message) {
+func (ws *WebSocket) handleMessage(player *player.Player, msg message.Message) {
 	switch msg.Type {
 	case message.CreateRoomMsg:
 		ws.handleCreateRoom(player, msg)
@@ -34,7 +34,7 @@ func (ws *WebSocket) handleMessage(player *player.Player, msg *message.Message) 
 	}
 }
 
-func (ws *WebSocket) handleCreateRoom(player *player.Player, msg *message.Message) {
+func (ws *WebSocket) handleCreateRoom(player *player.Player, msg message.Message) {
 	var settings room.RoomSettings
 	utils.ParseInterfaceToJSON(msg.Data, &settings)
 
@@ -63,7 +63,7 @@ func (ws *WebSocket) handleCreateRoom(player *player.Player, msg *message.Messag
 	})
 }
 
-func (ws *WebSocket) handleJoinRoom(player *player.Player, msg *message.Message) {
+func (ws *WebSocket) handleJoinRoom(player *player.Player, msg message.Message) {
 	roomCode := msg.Data.(string)
 
 	err := ws.rm.JoinRoom(player, roomCode)
@@ -151,15 +151,9 @@ func (ws *WebSocket) handleStartGame(player *player.Player) {
 		return
 	}
 
-	positions := []*primitives.Rect{
-		primitives.NewRect(
-			primitives.NewVec2(100, 300),
-			primitives.NewVec2(100, 160),
-		),
-		primitives.NewRect(
-			primitives.NewVec2(500, 300),
-			primitives.NewVec2(100, 160),
-		),
+	positions := []primitives.Rect{
+		primitives.NewRect(100, 300, 100, 160),
+		primitives.NewRect(500, 300, 100, 160),
 	}
 	ids := make([]string, 0, 2)
 	for id := range room.GetPlayers() {
@@ -240,7 +234,7 @@ func (ws *WebSocket) handleUpdatePlayerInfo(player *player.Player) {
 	})
 }
 
-func (ws *WebSocket) handlerGameState(player *player.Player, msg *message.Message) {
+func (ws *WebSocket) handlerGameState(player *player.Player, msg message.Message) {
 	roomCode := player.GetRoomID()
 	if roomCode == "" {
 		player.Send(message.Message{
@@ -259,5 +253,5 @@ func (ws *WebSocket) handlerGameState(player *player.Player, msg *message.Messag
 		return
 	}
 
-	room.Broadcast(*msg, player.ID())
+	room.Broadcast(msg, player.ID())
 }

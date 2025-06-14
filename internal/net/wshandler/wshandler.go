@@ -57,6 +57,6 @@ func (ws *WebSocket) WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		go ws.handleMessage(player, &msg)
+		go ws.handleMessage(player, msg)
 	}
 }

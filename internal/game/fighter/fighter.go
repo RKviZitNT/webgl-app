@@ -10,13 +10,13 @@ import (
 )
 
 type Fighter struct {
-	Character *character.Character
-	Collider  *primitives.Rect
 	State     animation.AnimationType
+	Collider  primitives.Rect
+	Character *character.Character
 	Animation animation.Animation
 }
 
-func NewFighter(character *character.Character, collider *primitives.Rect) *Fighter {
+func NewFighter(character *character.Character, collider primitives.Rect) *Fighter {
 	return &Fighter{
 		Character: character,
 		Collider:  collider,
@@ -45,7 +45,8 @@ func (f *Fighter) Move(keys map[string]bool, deltaTime float64) {
 	if keys["ArrowDown"] || keys["KeyS"] {
 		dy = 1
 	}
-	dir := primitives.NewVec2(dx, dy).Normalize()
+	dir := primitives.NewVec2(dx, dy)
+	dir = dir.Normalize()
 
 	offset := dir.MulValue(speed * deltaTime)
 	newRect := f.Collider.Move(offset)

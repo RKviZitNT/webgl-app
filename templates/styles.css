@@ -166,16 +166,9 @@ h1 {
 }
 
 #game_canvas {
-    width: 100vw;
-    height: 100vh;
     display: block;
     background: #0a0a0a;
 }
-
-/* #loading_screen {
-    display: block;
-    position: fixed;
-} */
 
 .loading-spinner {
     width: 50px;

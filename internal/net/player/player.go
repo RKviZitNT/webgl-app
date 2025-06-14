@@ -32,11 +32,11 @@ func (p *Player) ID() string {
 	return p.id
 }
 
-func (p *Player) PlayerInfo() *message.PlayerInfo {
+func (p *Player) PlayerInfo() message.PlayerInfo {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	return &message.PlayerInfo{
+	return message.PlayerInfo{
 		ID:   p.id,
 		Name: p.name,
 	}

@@ -57,7 +57,7 @@ func (a *AssetsManager) loadMetadata(srcPaths map[string]string) error {
 
 	resourceloader.LoadFiles(srcPaths,
 		func(name string, src js.Value) {
-			a.addMetadata(name, src)
+			a.addMetadata(name, &src)
 			wg.Done()
 		},
 		func(err error) {
@@ -111,11 +111,11 @@ func (a *AssetsManager) loadTextures(glCtx *webgl.GLContext, srcPaths map[string
 	return loadErr
 }
 
-func (a *AssetsManager) addMetadata(name string, src js.Value) {
+func (a *AssetsManager) addMetadata(name string, src *js.Value) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
-	a.metadata[name] = &src
+	a.metadata[name] = src
 }
 
 func (a *AssetsManager) GetMetadata(name string) *js.Value {

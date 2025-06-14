@@ -35,7 +35,7 @@ func (tq *textureQueue) addCommand(bufferData []float32, texture *Texture) {
 type debugCommand struct {
 	bufferData []float32
 	thickness  float32
-	color      *Color
+	color      Color
 }
 
 type debugQueue struct {
@@ -50,7 +50,7 @@ func newDebugQueue(program js.Value) *debugQueue {
 	}
 }
 
-func (dq *debugQueue) addCommand(bufferData []float32, thickness float32, color *Color) {
+func (dq *debugQueue) addCommand(bufferData []float32, thickness float32, color Color) {
 	dq.queue = append(dq.queue, debugCommand{
 		bufferData: bufferData,
 		thickness:  thickness,
@@ -68,8 +68,6 @@ func (ctx *GLContext) drawTextureQueue() {
 		return
 	}
 
-	ctx.GL.Call("viewport", ctx.Screen.ScreenRect.Left(), ctx.Screen.ScreenRect.Top(), ctx.Screen.ScreenRect.Width(), ctx.Screen.ScreenRect.Height())
-	gl.Call("clear", gl.Get("COLOR_BUFFER_BIT"))
 	gl.Call("useProgram", program)
 
 	uResolution := gl.Call("getUniformLocation", program, "uResolution")
@@ -108,7 +106,6 @@ func (ctx *GLContext) drawDebugQueue() {
 		return
 	}
 
-	ctx.GL.Call("viewport", ctx.Screen.ScreenRect.Left(), ctx.Screen.ScreenRect.Top(), ctx.Screen.ScreenRect.Width(), ctx.Screen.ScreenRect.Height())
 	gl.Call("useProgram", program)
 
 	uResolution := gl.Call("getUniformLocation", program, "uResolution")
@@ -132,6 +129,10 @@ func (ctx *GLContext) drawDebugQueue() {
 }
 
 func (ctx *GLContext) DrawQueue() {
+	gl := ctx.GL
+	gl.Call("viewport", ctx.Screen.ScreenRect.Left(), ctx.Screen.ScreenRect.Top(), ctx.Screen.ScreenRect.Width(), ctx.Screen.ScreenRect.Height())
+	gl.Call("clear", gl.Get("COLOR_BUFFER_BIT"))
+
 	ctx.drawTextureQueue()
 	ctx.drawDebugQueue()
 }

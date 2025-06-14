@@ -18,7 +18,7 @@ type GLContext struct {
 }
 
 func NewWebGLContext(canvasId string) (*GLContext, error) {
-	screen, err := newScreen(canvasId, primitives.NewRect(primitives.NewVec2(0, 0), primitives.NewVec2(config.ProgramConf.Window.Width, config.ProgramConf.Window.Height)))
+	screen, err := newScreen(canvasId, primitives.NewRect(0, 0, config.ProgramConf.Window.Width, config.ProgramConf.Window.Height))
 	if err != nil {
 		return nil, err
 	}
@@ -89,5 +89,15 @@ func (ctx *GLContext) InitWebGL() error {
 		jsfunc.LogInfo("Debug queue created")
 	}
 
+	js.Global().Call("addEventListener", "resize", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		ctx.handleResizeScreen()
+		return nil
+	}))
+
 	return nil
+}
+
+func (ctx *GLContext) handleResizeScreen() {
+	ctx.Screen.Update()
+	ctx.GL.Call("viewport", ctx.Screen.ScreenRect.Left(), ctx.Screen.ScreenRect.Top(), ctx.Screen.ScreenRect.Width(), ctx.Screen.ScreenRect.Height())
 }

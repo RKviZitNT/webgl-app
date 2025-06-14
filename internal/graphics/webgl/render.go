@@ -7,7 +7,7 @@ import (
 	"webgl-app/internal/jsfunc"
 )
 
-func (ctx *GLContext) RenderSprite(sprite *Sprite, drawRect *primitives.Rect) {
+func (ctx *GLContext) RenderSprite(sprite *Sprite, drawRect primitives.Rect) {
 	if sprite == nil {
 		jsfunc.LogError("RenderSprite: sprite is nil")
 		return
@@ -24,23 +24,21 @@ func (ctx *GLContext) RenderSprite(sprite *Sprite, drawRect *primitives.Rect) {
 		return
 	}
 
-	if sprite.Offset != nil {
-		drawRect = drawRect.Move(sprite.Offset)
-	}
+	drawRect = drawRect.Move(sprite.Offset)
 
 	var (
 		x1, y1, x2, y2 float32
 		u1, v1, u2, v2 float32
 	)
 
-	x1 = float32(drawRect.Left())
-	y1 = float32(drawRect.Top())
+	x1 = float32(drawRect.Left() * ctx.Screen.Scale.X)
+	y1 = float32(drawRect.Top() * ctx.Screen.Scale.Y)
 	if sprite.Rect == nil {
-		x2 = float32(drawRect.Left() + drawRect.Width()*sprite.Scale)
-		y2 = float32(drawRect.Top() + drawRect.Height()*sprite.Scale)
+		x2 = float32((drawRect.Left() + drawRect.Width()*sprite.Scale) * ctx.Screen.Scale.X)
+		y2 = float32((drawRect.Top() + drawRect.Height()*sprite.Scale) * ctx.Screen.Scale.Y)
 	} else {
-		x2 = float32(drawRect.Left() + sprite.Rect.Width()*sprite.Scale)
-		y2 = float32(drawRect.Top() + sprite.Rect.Height()*sprite.Scale)
+		x2 = float32((drawRect.Left() + sprite.Rect.Width()*sprite.Scale) * ctx.Screen.Scale.X)
+		y2 = float32((drawRect.Top() + sprite.Rect.Height()*sprite.Scale) * ctx.Screen.Scale.Y)
 	}
 
 	if sprite.Rect == nil {
@@ -64,15 +62,15 @@ func (ctx *GLContext) RenderSprite(sprite *Sprite, drawRect *primitives.Rect) {
 	ctx.textureQueue.addCommand(bufferData, sprite.Texture)
 }
 
-func (ctx *GLContext) RenderRect(rect *primitives.Rect, thickness float32, color *Color) {
+func (ctx *GLContext) RenderRect(rect primitives.Rect, thickness float32, color Color) {
 	var (
 		x1, y1, x2, y2 float32
 	)
 
-	x1 = float32(rect.Left())
-	y1 = float32(rect.Top())
-	x2 = float32(rect.Right())
-	y2 = float32(rect.Bottom())
+	x1 = float32(rect.Left() * ctx.Screen.Scale.X)
+	y1 = float32(rect.Top() * ctx.Screen.Scale.Y)
+	x2 = float32(rect.Right() * ctx.Screen.Scale.X)
+	y2 = float32(rect.Bottom() * ctx.Screen.Scale.Y)
 
 	bufferData := []float32{
 		x1, y1,
