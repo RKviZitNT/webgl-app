@@ -152,8 +152,8 @@ func (ws *WebSocket) handleStartGame(player *player.Player) {
 	}
 
 	positions := []primitives.Rect{
-		primitives.NewRect(100, 300, 100, 160),
-		primitives.NewRect(500, 300, 100, 160),
+		primitives.NewRect(100, 550, 100, 160),
+		primitives.NewRect(500, 550, 100, 160),
 	}
 	ids := make([]string, 0, 2)
 	for id := range room.GetPlayers() {

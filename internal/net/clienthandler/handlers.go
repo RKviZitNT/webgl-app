@@ -71,7 +71,7 @@ func handleStartGame(data interface{}) {
 	utils.ParseInterfaceToJSON(data, &gameData)
 
 	gm.Stop()
-	go gm.Start(playerInfo.ID, gameData.FightersInfo)
+	gm.Start(playerInfo.ID, gameData.FightersInfo)
 }
 
 func handleEndGame(data interface{}) {

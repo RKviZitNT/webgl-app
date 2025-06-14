@@ -7,17 +7,19 @@ import (
 )
 
 type Sprite struct {
-	Texture *Texture
-	Rect    *primitives.Rect
-	Scale   float64
-	Offset  primitives.Vec2
+	Texture        *Texture
+	Rect           *primitives.Rect
+	Scale          float64
+	Offset         primitives.Vec2
+	SpecularOffset primitives.Vec2
 }
 
-func NewSprite(texture *Texture, rect *primitives.Rect, scale float64, offset primitives.Vec2) *Sprite {
+func NewSprite(texture *Texture, rect *primitives.Rect, scale float64, offset primitives.Vec2, specularOffset primitives.Vec2) *Sprite {
 	return &Sprite{
-		Texture: texture,
-		Rect:    rect,
-		Scale:   scale,
-		Offset:  offset,
+		Texture:        texture,
+		Rect:           rect,
+		Scale:          scale,
+		Offset:         offset,
+		SpecularOffset: specularOffset,
 	}
 }

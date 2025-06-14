@@ -10,19 +10,6 @@ import (
 	"webgl-app/internal/utils"
 )
 
-type AnimationType string
-
-const (
-	Idle    AnimationType = "idle"
-	Walk    AnimationType = "walk"
-	Run     AnimationType = "run"
-	Attack1 AnimationType = "attack1"
-	Attack2 AnimationType = "attack2"
-	Death   AnimationType = "death"
-	Hurt    AnimationType = "hurt"
-	Jump    AnimationType = "jump"
-)
-
 type AnimationsParameters struct {
 	Width            int `json:"width"`
 	Height           int `json:"height"`
@@ -47,14 +34,15 @@ type Animation struct {
 	FrameTime       float64
 	timer           float64
 	currentFrameIdx int
+	isEnd           bool
 }
 
-func NewAnimation(aType AnimationType, data AnimationsData, texture *webgl.Texture, scale float64, offset primitives.Vec2) *Animation {
+func NewAnimation(aName string, data AnimationsData, texture *webgl.Texture, scale float64, offset primitives.Vec2, specularOffset primitives.Vec2) *Animation {
 	if texture == nil {
 		return nil
 	}
 
-	aData := data.Animations[string(aType)]
+	aData := data.Animations[aName]
 
 	frameWidth := data.Parameters.Width / data.Parameters.FrameWidthCount
 	frameHeight := data.Parameters.Height / data.Parameters.FrameHeigntCount
@@ -70,7 +58,7 @@ func NewAnimation(aType AnimationType, data AnimationsData, texture *webgl.Textu
 
 		rect := primitives.NewRect(float64(col*frameWidth), float64(row*frameHeight), float64(frameWidth), float64(frameHeight))
 
-		frames = append(frames, webgl.NewSprite(texture, &rect, scale, offset))
+		frames = append(frames, webgl.NewSprite(texture, &rect, scale, offset, specularOffset))
 	}
 
 	return &Animation{
@@ -81,16 +69,16 @@ func NewAnimation(aType AnimationType, data AnimationsData, texture *webgl.Textu
 	}
 }
 
-func NewAnimationsSet(aTypes []AnimationType, metadata string, texture *webgl.Texture, scale float64, offset primitives.Vec2) (map[AnimationType]*Animation, error) {
+func NewAnimationsSet(metadata string, texture *webgl.Texture, scale float64, offset primitives.Vec2, specularOffset primitives.Vec2) (map[string]*Animation, error) {
 	var data AnimationsData
 	err := utils.ParseStringToJSON(metadata, &data)
 	if err != nil {
 		return nil, err
 	}
 
-	animations := make(map[AnimationType]*Animation)
-	for _, aType := range aTypes {
-		animations[aType] = NewAnimation(aType, data, texture, scale, offset)
+	animations := make(map[string]*Animation)
+	for aName, _ := range data.Animations {
+		animations[aName] = NewAnimation(aName, data, texture, scale, offset, specularOffset)
 	}
 	return animations, nil
 }
@@ -118,6 +106,9 @@ func (a *Animation) Update(deltaTime float64) {
 	if a.timer > a.FrameTime {
 		a.timer = 0
 		a.currentFrameIdx = (a.currentFrameIdx + 1) % len(a.Frames)
+		if a.currentFrameIdx == 0 {
+			a.isEnd = true
+		}
 	}
 }
 
@@ -143,4 +134,8 @@ func (a *Animation) GetCurrentFrame() *webgl.Sprite {
 	}
 
 	return frame
+}
+
+func (a *Animation) IsEnd() bool {
+	return a.isEnd
 }

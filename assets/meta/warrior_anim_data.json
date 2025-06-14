@@ -8,7 +8,7 @@
     },    
     "animations": {
         "idle": {
-            "frame_time": 100,
+            "frame_time": 120,
             "first_frame": 1,
             "frame_count": 6
         },
@@ -38,7 +38,7 @@
             "frame_count": 4
         },
         "jump": {
-            "frame_time": 100,
+            "frame_time": 70,
             "first_frame": 42,
             "frame_count": 8
         },

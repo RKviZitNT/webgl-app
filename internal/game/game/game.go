@@ -20,7 +20,7 @@ import (
 )
 
 type Game struct {
-	playerId     string
+	players      []string
 	running      bool
 	socket       *js.Value
 	glCtx        *webgl.GLContext
@@ -47,19 +47,19 @@ func NewGame(socket *js.Value, glCtx *webgl.GLContext) (*Game, error) {
 
 	characters := make(map[character.CharacterName]*character.Character)
 
-	aTypes := []animation.AnimationType{animation.Idle, animation.Walk, animation.Attack1, animation.Attack2, animation.Death, animation.Hurt, animation.Jump}
-	warriorAnim, err := animation.NewAnimationsSet(aTypes, assets.GetMetadata("warrior_anim").String(), assets.GetTexture("warrior"), 5.5, primitives.NewVec2(-95, -75))
+	warriorAnim, err := animation.NewAnimationsSet(assets.GetMetadata("warrior_anim").String(), assets.GetTexture("warrior"), 5.5, primitives.NewVec2(-98, -75), primitives.NewVec2(-180, -75))
 	if err != nil {
 		return nil, err
 	}
-	warriorChar := character.NewCharacter(character.Warrior, warriorAnim[animation.Idle].GetCurrentFrame())
+	warriorChar := character.NewCharacter(character.Warrior, warriorAnim["idle"].GetCurrentFrame())
 	warriorChar.SetAnimations(warriorAnim)
 	characters[character.Warrior] = warriorChar
 
 	levels := make(map[level.LevelName]*level.Level)
-	levels[level.DefaultLevel] = level.NewLevel(level.DefaultLevel, webgl.NewSprite(assets.GetTexture("background2"), nil, 1, primitives.NewVec2(0, 0)))
+	levels[level.DefaultLevel] = level.NewLevel(level.DefaultLevel, webgl.NewSprite(assets.GetTexture("background2"), nil, 1, primitives.NewVec2(0, 0), primitives.NewVec2(0, 0)))
 
 	return &Game{
+		players:    make([]string, 2),
 		socket:     socket,
 		glCtx:      glCtx,
 		keys:       make(map[string]bool),
@@ -70,8 +70,7 @@ func NewGame(socket *js.Value, glCtx *webgl.GLContext) (*Game, error) {
 }
 
 func (g *Game) Start(playerId string, fightersInfo []message.FighterInfo) {
-	g.playerId = playerId
-	g.running = true
+	g.players[0] = playerId
 
 	g.currentLevel = g.levels[level.DefaultLevel]
 
@@ -90,8 +89,10 @@ func (g *Game) Start(playerId string, fightersInfo []message.FighterInfo) {
 
 	g.fighters = make(map[string]*fighter.Fighter)
 	for _, fighterInfo := range fightersInfo {
+		if g.players[0] != fighterInfo.ID {
+			g.players[1] = fighterInfo.ID
+		}
 		g.fighters[fighterInfo.ID] = fighter.NewFighter(g.characters[character.CharacterName(fighterInfo.CharacterName)], fighterInfo.Collider)
-		g.fighters[fighterInfo.ID].SetAnimation(animation.Idle)
 	}
 
 	g.renderLoop()
@@ -99,9 +100,7 @@ func (g *Game) Start(playerId string, fightersInfo []message.FighterInfo) {
 
 func (g *Game) Stop() {
 	g.running = false
-	g.fighters = make(map[string]*fighter.Fighter)
-	g.currentLevel = nil
-
+	g.keys = make(map[string]bool)
 }
 
 func (g *Game) renderLoop() {
@@ -114,6 +113,7 @@ func (g *Game) renderLoop() {
 
 	lastFrameTime = time.Now()
 
+	g.running = true
 	renderFrame = js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		if g.running {
 			currentTime := time.Now()
@@ -142,37 +142,40 @@ func (g *Game) update(deltaTime time.Duration) {
 		g.sendEndGameMsg()
 	}
 
-	g.fighters[g.playerId].Move(g.keys, deltaTime.Seconds())
-
-	for _, f := range g.fighters {
-		f.Animation.Update(float64(deltaTime.Milliseconds()))
+	if g.players[1] != "" {
+		g.fighters[g.players[0]].HandleSpecular(g.fighters[g.players[1]].Collider.Center())
+		g.fighters[g.players[1]].HandleSpecular(g.fighters[g.players[0]].Collider.Center())
 	}
+
+	g.fighters[g.players[0]].Update(g.keys, deltaTime)
 }
 
 func (g *Game) draw() {
-	g.glCtx.RenderSprite(g.currentLevel.Background, g.glCtx.Screen.BaseScreenRect)
+	g.glCtx.RenderSprite(g.currentLevel.Background, g.glCtx.Screen.BaseScreenRect, false)
 
-	for _, f := range g.fighters {
-		g.glCtx.RenderSprite(f.Animation.GetCurrentFrame(), f.Collider)
-		g.glCtx.RenderRect(f.Collider, 1.0, webgl.ColorRed(1.0))
+	f1, f2 := g.fighters[g.players[0]], g.fighters[g.players[1]]
+
+	if g.players[1] != "" {
+		f2.Draw(g.glCtx)
 	}
+	f1.Draw(g.glCtx)
 
 	g.glCtx.DrawQueue()
 }
 
 func (g *Game) UpdatePlayersData(fighterInfo message.FighterInfo) {
-	fighter := g.fighters[fighterInfo.ID]
-	fighter.Collider = fighterInfo.Collider
-	fighter.State = animation.AnimationType(fighterInfo.State)
+	_fighter := g.fighters[fighterInfo.ID]
+	_fighter.Collider = fighterInfo.Collider
+	_fighter.State = fighter.FighterState(fighterInfo.State)
 }
 
 func (g *Game) sendPlayerState() {
 	msg := message.Message{
 		Type: message.GameStateMsg,
 		Data: message.FighterInfo{
-			ID:            g.playerId,
+			ID:            g.players[0],
 			CharacterName: string(character.Warrior),
-			Collider:      g.fighters[g.playerId].Collider,
+			Collider:      g.fighters[g.players[0]].Collider,
 		},
 	}
 
