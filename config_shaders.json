@@ -1,0 +1,10 @@
+{
+    "texture_shaders": {
+        "vertex": "shaders/texture_vertex.glsl",
+        "fragment": "shaders/texture_fragment.glsl"
+    },
+    "debug_shaders": {
+        "vertex": "shaders/debug_vertex.glsl",
+        "fragment": "shaders/debug_fragment.glsl"
+    }
+}

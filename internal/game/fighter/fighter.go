@@ -10,13 +10,13 @@ import (
 )
 
 type Fighter struct {
-	Character *character.Character
-	Collider  *primitives.Rect
 	State     animation.AnimationType
+	Collider  primitives.Rect
+	Character *character.Character
 	Animation animation.Animation
 }
 
-func NewFighter(character *character.Character, collider *primitives.Rect) *Fighter {
+func NewFighter(character *character.Character, collider primitives.Rect) *Fighter {
 	return &Fighter{
 		Character: character,
 		Collider:  collider,
@@ -45,7 +45,8 @@ func (f *Fighter) Move(keys map[string]bool, deltaTime float64) {
 	if keys["ArrowDown"] || keys["KeyS"] {
 		dy = 1
 	}
-	dir := primitives.NewVec2(dx, dy).Normalize()
+	dir := primitives.NewVec2(dx, dy)
+	dir = dir.Normalize()
 
 	offset := dir.MulValue(speed * deltaTime)
 	newRect := f.Collider.Move(offset)
@@ -54,13 +55,13 @@ func (f *Fighter) Move(keys map[string]bool, deltaTime float64) {
 	if f.Collider.Left() < 0 {
 		f.Collider.SetLeft(0)
 	}
-	if f.Collider.Right() > config.GlobalConfig.Window.Width {
-		f.Collider.SetRight(config.GlobalConfig.Window.Width)
+	if f.Collider.Right() > config.ProgramConf.Window.Width {
+		f.Collider.SetRight(config.ProgramConf.Window.Width)
 	}
 	if f.Collider.Top() < 0 {
 		f.Collider.SetTop(0)
 	}
-	if f.Collider.Bottom() > config.GlobalConfig.Window.Height {
-		f.Collider.SetBottom(config.GlobalConfig.Window.Height)
+	if f.Collider.Bottom() > config.ProgramConf.Window.Height {
+		f.Collider.SetBottom(config.ProgramConf.Window.Height)
 	}
 }

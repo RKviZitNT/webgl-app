@@ -28,7 +28,7 @@ func RegisterCallbacks() {
 
 	jsfunc.LogInfo(" ----- Connecting to WebSocket ----- ")
 
-	js.Global().Call("setLoadingProgress", 100, "Initialization...")
+	jsfunc.SetLoadingProgress(100, "Initialization...")
 	connectWebSocket()
 
 	jsfunc.ShowScreen("main_menu")

@@ -8,77 +8,77 @@
     },    
     "animations": {
         "idle": {
-            "frame_time": 170,
+            "frame_time": 100,
             "first_frame": 1,
             "frame_count": 6
         },
         "walk": {
-            "frame_time": 170,
+            "frame_time": 100,
             "first_frame": 7,
             "frame_count": 8
         },
         "attack1": {
-            "frame_time": 170,
+            "frame_time": 100,
             "first_frame": 15,
             "frame_count": 8
         },
         "attack2": {
-            "frame_time": 170,
+            "frame_time": 100,
             "first_frame": 23,
             "frame_count": 4
         },
         "death": {
-            "frame_time": 170,
+            "frame_time": 100,
             "first_frame": 27,
             "frame_count": 11
         },
         "hurt": {
-            "frame_time": 170,
+            "frame_time": 100,
             "first_frame": 38,
             "frame_count": 4
         },
         "jump": {
-            "frame_time": 170,
+            "frame_time": 100,
             "first_frame": 42,
             "frame_count": 8
         },
         "edge_grub": {
-            "frame_time": 170,
+            "frame_time": 100,
             "first_frame": 50,
             "frame_count": 5
         },
         "edge_idle": {
-            "frame_time": 170,
+            "frame_time": 100,
             "first_frame": 55,
             "frame_count": 6
         },
         "wall_slide": {
-            "frame_time": 170,
+            "frame_time": 100,
             "first_frame": 61,
             "frame_count": 3
         },
         "crouch": {
-            "frame_time": 170,
+            "frame_time": 100,
             "first_frame": 64,
             "frame_count": 6
         },
         "dash": {
-            "frame_time": 170,
+            "frame_time": 100,
             "first_frame": 70,
             "frame_count": 7
         },
         "dash_attack": {
-            "frame_time": 170,
+            "frame_time": 100,
             "first_frame": 77,
             "frame_count": 10
         },
         "slide": {
-            "frame_time": 170,
+            "frame_time": 100,
             "first_frame": 87,
             "frame_count": 5
         },
         "ladder_grub": {
-            "frame_time": 170,
+            "frame_time": 100,
             "first_frame": 92,
             "frame_count": 8
         }

@@ -57,7 +57,7 @@ func NewGame(socket *js.Value, glCtx *webgl.GLContext) (*Game, error) {
 	characters[character.Warrior] = warriorChar
 
 	levels := make(map[level.LevelName]*level.Level)
-	levels[level.DefaultLevel] = level.NewLevel(level.DefaultLevel, webgl.NewSprite(assets.GetTexture("background1"), nil, 1, nil))
+	levels[level.DefaultLevel] = level.NewLevel(level.DefaultLevel, webgl.NewSprite(assets.GetTexture("background2"), nil, 1, primitives.NewVec2(0, 0)))
 
 	return &Game{
 		socket:     socket,
@@ -107,7 +107,7 @@ func (g *Game) Stop() {
 func (g *Game) renderLoop() {
 	var (
 		renderFrame   js.Func
-		frameTime     = time.Second / time.Duration(config.GlobalConfig.Window.FrameRate)
+		frameTime     = time.Second / time.Duration(config.ProgramConf.Window.FrameRate)
 		lastFrameTime time.Time
 		elapsedTime   time.Duration
 	)
@@ -150,14 +150,14 @@ func (g *Game) update(deltaTime time.Duration) {
 }
 
 func (g *Game) draw() {
-	g.glCtx.RenderSprite(g.currentLevel.Background, g.glCtx.Screen.ScreenRect)
+	g.glCtx.RenderSprite(g.currentLevel.Background, g.glCtx.Screen.BaseScreenRect)
 
 	for _, f := range g.fighters {
-		g.glCtx.RenderSprite(g.currentLevel.Background, f.Collider)
 		g.glCtx.RenderSprite(f.Animation.GetCurrentFrame(), f.Collider)
+		g.glCtx.RenderRect(f.Collider, 1.0, webgl.ColorRed(1.0))
 	}
 
-	g.glCtx.FlushDrawQueue()
+	g.glCtx.DrawQueue()
 }
 
 func (g *Game) UpdatePlayersData(fighterInfo message.FighterInfo) {

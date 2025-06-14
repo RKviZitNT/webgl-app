@@ -4,8 +4,9 @@ build: build-server build-client
 	mkdir -p build/static
 	mkdir -p build/bin
 	cp -v "$(shell go env GOROOT)/misc/wasm/wasm_exec.js" build/static/
-	cp -v config.json build/static
-	cp -v assets_config.json build/static
+	cp -v config_program.json build/static
+	cp -v config_shaders.json build/static
+	cp -v config_assets.json build/static
 	cp -v templates/* build/static
 	cp -r shaders build/static
 	cp -r assets build/static

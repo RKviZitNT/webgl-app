@@ -11,7 +11,7 @@ type Screen string
 const (
 	MainMenuScreen      Screen = "main_menu"
 	LobbyScreen         Screen = "lobby"
-	LobbyCinnectScreen  Screen = "lobby_connect"
+	LobbyConnectScreen  Screen = "lobby_connect"
 	LoadingScreenScreen Screen = "loading_screen"
 	GameScreenScreen    Screen = "game_screen"
 )
@@ -28,7 +28,7 @@ func SwitchStartButtonState(isEnabled bool) {
 	js.Global().Call("switchStartButtonState", isEnabled)
 }
 
-func SetLoadingProgress(progress int, message string) {
+func SetLoadingProgress(progress float64, message string) {
 	js.Global().Call("setLoadingProgress", progress, message)
 }
 

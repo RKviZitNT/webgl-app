@@ -49,7 +49,11 @@ type Animation struct {
 	currentFrameIdx int
 }
 
-func NewAnimation(aType AnimationType, data *AnimationsData, texture *webgl.Texture, scale float64, offset *primitives.Vec2) *Animation {
+func NewAnimation(aType AnimationType, data AnimationsData, texture *webgl.Texture, scale float64, offset primitives.Vec2) *Animation {
+	if texture == nil {
+		return nil
+	}
+
 	aData := data.Animations[string(aType)]
 
 	frameWidth := data.Parameters.Width / data.Parameters.FrameWidthCount
@@ -64,17 +68,9 @@ func NewAnimation(aType AnimationType, data *AnimationsData, texture *webgl.Text
 		col := (i - 1) % data.Parameters.FrameWidthCount
 		row := (i - 1) / data.Parameters.FrameWidthCount
 
-		pos := primitives.NewVec2(
-			float64(col*frameWidth),
-			float64(row*frameHeight),
-		)
-		size := primitives.NewVec2(
-			float64(frameWidth),
-			float64(frameHeight),
-		)
-		rect := primitives.NewRect(pos, size)
+		rect := primitives.NewRect(float64(col*frameWidth), float64(row*frameHeight), float64(frameWidth), float64(frameHeight))
 
-		frames = append(frames, webgl.NewSprite(texture, rect, scale, offset))
+		frames = append(frames, webgl.NewSprite(texture, &rect, scale, offset))
 	}
 
 	return &Animation{
@@ -85,8 +81,8 @@ func NewAnimation(aType AnimationType, data *AnimationsData, texture *webgl.Text
 	}
 }
 
-func NewAnimationsSet(aTypes []AnimationType, metadata string, texture *webgl.Texture, scale float64, offset *primitives.Vec2) (map[AnimationType]*Animation, error) {
-	var data *AnimationsData
+func NewAnimationsSet(aTypes []AnimationType, metadata string, texture *webgl.Texture, scale float64, offset primitives.Vec2) (map[AnimationType]*Animation, error) {
+	var data AnimationsData
 	err := utils.ParseStringToJSON(metadata, &data)
 	if err != nil {
 		return nil, err

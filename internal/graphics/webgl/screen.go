@@ -9,25 +9,23 @@ import (
 )
 
 type Screen struct {
-	Canvas         js.Value
-	BaseScreenRect *primitives.Rect
-	ScreenRect     *primitives.Rect
-	AspectRatio    float64
-	Scale          *primitives.Vec2
-	Offset         *primitives.Vec2
+	BaseScreenRect primitives.Rect
+	ScreenRect     primitives.Rect
+	Scale          primitives.Vec2
+	canvas         js.Value
+	aspectRatio    float64
 }
 
-func NewScreen(canvasId string, baseScreenRect *primitives.Rect) (*Screen, error) {
+func newScreen(canvasId string, baseScreenRect primitives.Rect) (*Screen, error) {
 	canvas := js.Global().Get("document").Call("getElementById", canvasId)
 	if canvas.IsUndefined() || canvas.IsNull() {
 		return nil, fmt.Errorf("NewScreen: canvas is nil")
 	}
 
 	screen := &Screen{
-		Canvas:         canvas,
 		BaseScreenRect: baseScreenRect,
-		ScreenRect:     baseScreenRect,
-		AspectRatio:    float64(baseScreenRect.Width()) / float64(baseScreenRect.Height()),
+		canvas:         canvas,
+		aspectRatio:    float64(baseScreenRect.Width()) / float64(baseScreenRect.Height()),
 	}
 	screen.Update()
 
@@ -39,14 +37,16 @@ func (s *Screen) Update() {
 	windowHeight := js.Global().Get("innerHeight").Float()
 
 	targetWidth := windowWidth
-	targetHeight := windowWidth / s.AspectRatio
+	targetHeight := windowWidth / s.aspectRatio
 
-	if targetHeight > s.ScreenRect.Height() {
-		targetWidth = windowHeight * s.AspectRatio
+	if targetHeight > windowHeight {
+		targetWidth = windowHeight * s.aspectRatio
 		targetHeight = windowHeight
 	}
 
-	s.Canvas.Set("width", targetWidth)
-	s.Canvas.Set("height", targetHeight)
-	s.ScreenRect = primitives.NewRect(primitives.NewVec2(0, 0), primitives.NewVec2(targetWidth, targetHeight))
+	s.Scale = primitives.NewVec2(targetWidth/s.BaseScreenRect.Width(), targetHeight/s.BaseScreenRect.Height())
+
+	s.canvas.Set("width", targetWidth)
+	s.canvas.Set("height", targetHeight)
+	s.ScreenRect = primitives.NewRect(0, 0, targetWidth, targetHeight)
 }
