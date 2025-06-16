@@ -11,8 +11,8 @@ import (
 )
 
 type AnimationsParameters struct {
-	Width            int `json:"width"`
-	Height           int `json:"height"`
+	FrameWidth       int `json:"frame_width"`
+	FrameHeight      int `json:"frame_height"`
 	FrameWidthCount  int `json:"frame_width_count"`
 	FrameHeigntCount int `json:"frame_height_count"`
 	AllFrameCount    int `json:"all_frame_count"`
@@ -44,8 +44,8 @@ func NewAnimation(aName string, data AnimationsData, tex *webgl.Texture, scale f
 
 	aData := data.Animations[aName]
 
-	frameWidth := data.Parameters.Width / data.Parameters.FrameWidthCount
-	frameHeight := data.Parameters.Height / data.Parameters.FrameHeigntCount
+	frameWidth := data.Parameters.FrameWidth
+	frameHeight := data.Parameters.FrameHeight
 	frames := make([]*webgl.Sprite, 0, aData.FrameCount)
 
 	for i := aData.FirstFrame; i < aData.FirstFrame+aData.FrameCount; i++ {

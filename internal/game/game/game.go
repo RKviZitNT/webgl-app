@@ -45,11 +45,10 @@ func NewGame(socket *js.Value, glCtx *webgl.GLContext) (*Game, error) {
 	}
 
 	game := Game{
-		fighters: make([]*fighter.Fighter, 2),
-		socket:   socket,
-		glCtx:    glCtx,
-		keys:     make(map[string]bool),
-		assets:   assets,
+		socket: socket,
+		glCtx:  glCtx,
+		keys:   make(map[string]bool),
+		assets: assets,
 	}
 
 	err = game.createLevels(assets)
@@ -75,7 +74,7 @@ func (g *Game) createLevels(assets *assetsmanager.AssetsManager) error {
 func (g *Game) createCharacters(assets *assetsmanager.AssetsManager) error {
 	g.characters = make(map[character.CharacterName]*character.Character)
 
-	warriorAnim, err := animation.NewAnimationsSet(assets.GetMetadata("warrior_anim").String(), assets.GetTexture("warrior"), 5.5, primitives.NewVec2(-98, -75), primitives.NewVec2(-181, -75))
+	warriorAnim, err := animation.NewAnimationsSet(assets.GetMetadata("warrior_meta").String(), assets.GetTexture("warrior_spritesheet"), 5.5, primitives.NewVec2(-98, -75), primitives.NewVec2(-181, -75))
 	if err != nil {
 		return err
 	}
@@ -84,11 +83,11 @@ func (g *Game) createCharacters(assets *assetsmanager.AssetsManager) error {
 		Attack1Damage:     10,
 		Attack2Damage:     5,
 		Attack1Range:      110,
-		Attack2Range:      70,
+		Attack2Range:      80,
 		Attack1Height:     160,
-		Attack2Height:     60,
-		Attack1Up:         50,
-		Attack2Up:         40,
+		Attack2Height:     120,
+		Attack1Up:         40,
+		Attack2Up:         30,
 		Attack1FrameIndex: 5,
 		Attack2FrameIndex: 2,
 	}
@@ -101,6 +100,7 @@ func (g *Game) createCharacters(assets *assetsmanager.AssetsManager) error {
 }
 
 func (g *Game) Start(playerId string, fightersPositions map[string]int) {
+	g.fighters = make([]*fighter.Fighter, 2)
 	g.currentLevel = g.levels[level.DefaultLevel]
 
 	js.Global().Call("addEventListener", "keydown", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
@@ -117,8 +117,8 @@ func (g *Game) Start(playerId string, fightersPositions map[string]int) {
 	}))
 
 	positions := []float64{
-		config.ProgramConf.Window.Width / 4,
-		config.ProgramConf.Window.Width - config.ProgramConf.Window.Width/4,
+		config.ProgramConfig.Window.Width / 4,
+		config.ProgramConfig.Window.Width - config.ProgramConfig.Window.Width/4,
 	}
 
 	for id, fighterPos := range fightersPositions {
@@ -129,7 +129,7 @@ func (g *Game) Start(playerId string, fightersPositions map[string]int) {
 		}
 	}
 
-	if config.ProgramConf.Debug {
+	if config.ProgramConfig.Debug {
 		if g.fighters[1] == nil {
 			g.fighters[1] = fighter.NewFighter(g.characters[character.Warrior], positions[1])
 		}
@@ -141,13 +141,12 @@ func (g *Game) Start(playerId string, fightersPositions map[string]int) {
 func (g *Game) Stop() {
 	g.running = false
 	g.keys = make(map[string]bool)
-	g.fighters = make([]*fighter.Fighter, 2)
 }
 
 func (g *Game) renderLoop() {
 	var (
 		renderFrame   js.Func
-		frameTime     = time.Second / time.Duration(config.ProgramConf.Window.FrameRate)
+		frameTime     = time.Second / time.Duration(config.ProgramConfig.Window.FrameRate)
 		lastFrameTime time.Time
 		elapsedTime   time.Duration
 	)
@@ -156,22 +155,25 @@ func (g *Game) renderLoop() {
 
 	g.running = true
 	renderFrame = js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		if g.running {
-			currentTime := time.Now()
-			deltaTime := currentTime.Sub(lastFrameTime)
-			lastFrameTime = currentTime
-
-			g.update(deltaTime)
-			g.sendPlayerState()
-			g.draw()
-
-			elapsedTime = time.Now().Sub(currentTime)
-			if elapsedTime < frameTime {
-				time.Sleep(frameTime - elapsedTime)
-			}
-
-			js.Global().Call("requestAnimationFrame", renderFrame)
+		if !g.running {
+			return nil
 		}
+
+		currentTime := time.Now()
+		deltaTime := currentTime.Sub(lastFrameTime)
+		lastFrameTime = currentTime
+
+		g.update(deltaTime)
+		g.draw()
+
+		g.sendPlayerState()
+
+		elapsedTime = time.Now().Sub(currentTime)
+		if elapsedTime < frameTime {
+			time.Sleep(frameTime - elapsedTime)
+		}
+
+		js.Global().Call("requestAnimationFrame", renderFrame)
 		return nil
 	})
 
@@ -179,6 +181,10 @@ func (g *Game) renderLoop() {
 }
 
 func (g *Game) update(deltaTime time.Duration) {
+	if !g.running || g.fighters[0] == nil || g.fighters[1] == nil {
+		return
+	}
+
 	if g.keys["Escape"] {
 		g.sendEndGameMsg()
 	}
@@ -194,6 +200,10 @@ func (g *Game) update(deltaTime time.Duration) {
 }
 
 func (g *Game) draw() {
+	if !g.running {
+		return
+	}
+
 	g.glCtx.RenderSprite(g.currentLevel.Background, g.glCtx.Screen.BaseScreenRect, false)
 
 	if g.fighters[1] != nil {
@@ -209,6 +219,7 @@ func (g *Game) sendPlayerState() {
 		Type: message.GameStateMsg,
 		Data: message.FighterInfo{
 			CharacterName: string(character.Warrior),
+			HealthPoints:  g.fighters[0].Properties.HealthPoints,
 			HitBox:        g.fighters[0].Colliders.HitBox,
 			Control: message.FighterControl{
 				MoveLeft:  g.keys["KeyA"],
@@ -223,6 +234,7 @@ func (g *Game) sendPlayerState() {
 }
 
 func (g *Game) UpdatePlayersData(fighterInfo message.FighterInfo) {
+	g.fighters[1].Properties.HealthPoints = fighterInfo.HealthPoints
 	g.fighters[1].Colliders.HitBox = fighterInfo.HitBox
 	g.fighters[1].Control = fighterInfo.Control
 }

@@ -50,6 +50,7 @@ type FighterControl struct {
 type FighterInfo struct {
 	ID            string
 	CharacterName string
+	HealthPoints  float64
 	HitBox        primitives.Rect
 	Control       FighterControl
 }

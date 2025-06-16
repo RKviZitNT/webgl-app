@@ -69,7 +69,7 @@ func NewFighter(char *character.Character, posX float64) *Fighter {
 	colliders := Colliders{
 		HitBox: primitives.NewRect(0, 0, 100, 160),
 	}
-	colliders.HitBox.SetCenter(primitives.NewVec2(posX, config.ProgramConf.Window.Height))
+	colliders.HitBox.SetCenter(primitives.NewVec2(posX, config.ProgramConfig.Window.Height))
 
 	Properties := FighterProperties{
 		HealthPoints: char.Properies.HealthPoints,
@@ -108,6 +108,12 @@ func (f *Fighter) Draw(glCtx *webgl.GLContext) {
 func (f *Fighter) Update(deltaTime time.Duration, enemyFighter *Fighter) {
 	if f.State == Death && f.Animation.IsEnd {
 		return
+	}
+
+	if f.Properties.HealthPoints <= 0 {
+		f.Properties.death = true
+	} else {
+		f.Properties.death = false
 	}
 
 	var dx, dy float64
@@ -272,7 +278,6 @@ func (f *Fighter) handleEnemyAttack(attackCollider primitives.Rect, enemyFighter
 
 		if f.Properties.HealthPoints <= 0 {
 			f.Properties.HealthPoints = 0
-			f.Properties.death = true
 		} else {
 			f.Properties.hit = true
 		}
@@ -313,8 +318,8 @@ func (f *Fighter) handleState() {
 
 func (f *Fighter) handleWorldCollision() {
 	leftWall := 0.0
-	rightWall := config.ProgramConf.Window.Width
-	floor := config.ProgramConf.Window.Height - 250
+	rightWall := config.ProgramConfig.Window.Width
+	floor := config.ProgramConfig.Window.Height - 250
 
 	if f.Colliders.HitBox.Left() < leftWall {
 		f.Colliders.HitBox.SetLeft(0)

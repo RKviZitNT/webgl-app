@@ -12,6 +12,11 @@ import (
 	"webgl-app/internal/resourceloader"
 )
 
+type AssetsSources struct {
+	MetaDataSrc map[string]string `json:"metadata"`
+	TexturesSrc map[string]string `json:"textures"`
+}
+
 type AssetsManager struct {
 	metadata map[string]*js.Value
 	textures map[string]*webgl.Texture
@@ -30,14 +35,20 @@ func (a *AssetsManager) Load(glCtx *webgl.GLContext, assetsConfig string) error 
 		loadErr error
 	)
 
+	var assetsSources AssetsSources
+	err := config.LoadSources("assets-manifest.json", &assetsSources)
+	if err != nil {
+		return err
+	}
+
 	jsfunc.SetLoadingProgress(10, "Loading metadata...")
-	err := a.loadMetadata(config.AssetsConf.MetaDataSrc)
+	err = a.loadMetadata(assetsSources.MetaDataSrc)
 	if err != nil {
 		return err
 	}
 
 	jsfunc.SetLoadingProgress(55, "Loading textures...")
-	err = a.loadTextures(glCtx, config.AssetsConf.TexturesSrc)
+	err = a.loadTextures(glCtx, assetsSources.TexturesSrc)
 	if err != nil {
 		return err
 	}

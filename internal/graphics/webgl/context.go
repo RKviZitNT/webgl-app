@@ -18,7 +18,7 @@ type GLContext struct {
 }
 
 func NewWebGLContext(canvasId string) (*GLContext, error) {
-	screen, err := newScreen(canvasId, primitives.NewRect(0, 0, config.ProgramConf.Window.Width, config.ProgramConf.Window.Height))
+	screen, err := newScreen(canvasId, primitives.NewRect(0, 0, config.ProgramConfig.Window.Width, config.ProgramConfig.Window.Height))
 	if err != nil {
 		return nil, err
 	}
@@ -43,8 +43,14 @@ func NewWebGLContext(canvasId string) (*GLContext, error) {
 }
 
 func (ctx *GLContext) InitWebGL() error {
+	var shadersSources ShadersSources
+	err := config.LoadSources("shaders-manifest.json", &shadersSources)
+	if err != nil {
+		return err
+	}
+
 	jsfunc.SetLoadingProgress(0, "Loading texture shaders...")
-	texVertSrc, texFragSrc, err := ctx.loadShaders(config.ShadersConf.TextureShaders)
+	texVertSrc, texFragSrc, err := ctx.loadShaders(shadersSources.TextureShaders)
 	if err != nil {
 		return fmt.Errorf("failed to load texture shaders: %v", err)
 	}
@@ -65,9 +71,9 @@ func (ctx *GLContext) InitWebGL() error {
 	ctx.textureQueue = newTextureQueue(textureProgram)
 	jsfunc.LogInfo("Texture queue created")
 
-	if config.ProgramConf.Debug {
+	if config.ProgramConfig.Debug {
 		jsfunc.SetLoadingProgress(4, "Loading debug shaders...")
-		debugVertSrc, debugFragSrc, err := ctx.loadShaders(config.ShadersConf.DebugShaders)
+		debugVertSrc, debugFragSrc, err := ctx.loadShaders(shadersSources.DebugShaders)
 		if err != nil {
 			return fmt.Errorf("failed to load debug shaders: %v", err)
 		}

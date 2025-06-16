@@ -5,9 +5,18 @@ package webgl
 import (
 	"fmt"
 	"syscall/js"
-	"webgl-app/internal/config"
 	"webgl-app/internal/resourceloader"
 )
+
+type Shaders struct {
+	Vertex   string `json:"vertex"`
+	Fragment string `json:"fragment"`
+}
+
+type ShadersSources struct {
+	TextureShaders Shaders `json:"texture_shaders"`
+	DebugShaders   Shaders `json:"debug_shaders"`
+}
 
 func (ctx *GLContext) compileShaders(vertSrc, fragSrc string) (js.Value, js.Value, error) {
 	gl := ctx.GL
@@ -37,7 +46,7 @@ func (ctx *GLContext) compileShaders(vertSrc, fragSrc string) (js.Value, js.Valu
 	return vertShader, fragShader, nil
 }
 
-func (ctx *GLContext) loadShaders(shaders config.Shaders) (string, string, error) {
+func (ctx *GLContext) loadShaders(shaders Shaders) (string, string, error) {
 	var (
 		loadErr error
 		vertSrc string

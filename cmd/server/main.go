@@ -13,8 +13,8 @@ func main() {
 	http.Handle("/", http.FileServer(http.Dir(filepath.Join("build", "client"))))
 	http.HandleFunc("/ws", ws.WebSocketHandler)
 
-	log.Println("Server startes at :8080")
-	err := http.ListenAndServe(":8080", nil)
+	log.Println("Server started at :8080")
+	err := http.ListenAndServe("0.0.0.0:8080", nil)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -72,7 +72,7 @@ func (ctx *GLContext) RenderSprite(sprite *Sprite, drawRect primitives.Rect, spe
 }
 
 func (ctx *GLContext) RenderRect(rect primitives.Rect, color Color) {
-	if !config.ProgramConf.Debug {
+	if !config.ProgramConfig.Debug {
 		return
 	}
 

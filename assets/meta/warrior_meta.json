@@ -1,7 +1,7 @@
 {
     "parameters": {
-        "width": 414,
-        "height": 748,
+        "frame_width": 69,
+        "frame_height": 44,
         "frame_width_count": 6,
         "frame_height_count": 17,
         "all_frame_count": 99
