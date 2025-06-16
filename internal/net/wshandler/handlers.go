@@ -1,7 +1,6 @@
 package wshandler
 
 import (
-	"webgl-app/internal/graphics/primitives"
 	"webgl-app/internal/net/message"
 	"webgl-app/internal/net/player"
 	"webgl-app/internal/net/room"
@@ -151,28 +150,25 @@ func (ws *WebSocket) handleStartGame(_player *player.Player) {
 		return
 	}
 
-	positions := []primitives.Rect{
-		primitives.NewRect(100, 550, 100, 160),
-		primitives.NewRect(500, 550, 100, 160),
-	}
-	ids := make([]string, 0, 2)
+	ids := make([]string, 0)
 	for id := range _room.GetPlayers() {
 		ids = append(ids, id)
 	}
 
-	fightersInfo := make([]message.FighterInfo, 0, len(ids))
-	for i, id := range ids {
-		fightersInfo = append(fightersInfo, message.FighterInfo{
-			ID:            id,
-			CharacterName: "warrior",
-			Collider:      positions[i],
-		})
+	fightersPositions := make(map[string]int, 2)
+	for _, id := range ids {
+		if _player.ID() == id {
+			fightersPositions[id] = 0
+		} else {
+			fightersPositions[id] = 1
+		}
 	}
 
+	_room.UpdateStatus(true)
 	_room.Broadcast(message.Message{
 		Type: message.StartGameMsg,
 		Data: message.StartGameData{
-			FightersInfo: fightersInfo,
+			FightersPositions: fightersPositions,
 		},
 	}, nil)
 }
@@ -196,6 +192,7 @@ func (ws *WebSocket) handleEndGame(_player *player.Player) {
 		return
 	}
 
+	_room.UpdateStatus(false)
 	_room.Broadcast(message.Message{
 		Type: message.EndGameMsg,
 		Data: nil,

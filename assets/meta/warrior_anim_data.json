@@ -12,13 +12,13 @@
             "first_frame": 1,
             "frame_count": 6
         },
-        "walk": {
+        "run": {
             "frame_time": 100,
             "first_frame": 7,
             "frame_count": 8
         },
         "attack1": {
-            "frame_time": 100,
+            "frame_time": 80,
             "first_frame": 15,
             "frame_count": 8
         },
@@ -32,7 +32,7 @@
             "first_frame": 27,
             "frame_count": 11
         },
-        "hurt": {
+        "hit": {
             "frame_time": 100,
             "first_frame": 38,
             "frame_count": 4

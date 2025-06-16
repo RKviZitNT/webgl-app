@@ -13,17 +13,27 @@ const (
 	Warrior CharacterName = "warrior"
 )
 
+type CharacterProperties struct {
+	HealthPoints float64
+	AttackDamage float64
+	AttackRange  float64
+	AttackHeight float64
+	AttackUp     float64
+}
+
 type Character struct {
 	Name       CharacterName
 	Sprite     *webgl.Sprite
 	Animations map[string]*animation.Animation
+	Properies  CharacterProperties
 }
 
-func NewCharacter(name CharacterName, sprite *webgl.Sprite) *Character {
+func NewCharacter(name CharacterName, sprite *webgl.Sprite, properies CharacterProperties) *Character {
 	return &Character{
 		Name:       name,
 		Sprite:     sprite,
 		Animations: make(map[string]*animation.Animation),
+		Properies:  properies,
 	}
 }
 

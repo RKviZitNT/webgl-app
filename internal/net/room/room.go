@@ -81,34 +81,34 @@ func (r *Room) GetSettings() RoomSettings {
 	return r.settings
 }
 
-func (r *Room) AddPlayer(player *player.Player) error {
+func (r *Room) AddPlayer(_player *player.Player) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	if r.status == InGame {
 		return fmt.Errorf("there is a game going on in the room now")
 	}
-	if len(r.players) > r.settings.MaxPlayers {
+	if len(r.players) >= r.settings.MaxPlayers {
 		return fmt.Errorf("room is full")
 	}
 
-	r.players[player.ID()] = player
-	r.updateStatus()
+	r.players[_player.ID()] = _player
+	r.UpdateStatus(false)
 
 	return nil
 }
 
-func (r *Room) RemovePlayer(player *player.Player) error {
+func (r *Room) RemovePlayer(_player *player.Player) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	_, exists := r.players[player.ID()]
+	_, exists := r.players[_player.ID()]
 	if !exists {
 		return fmt.Errorf("player not found in room")
 	}
 
-	delete(r.players, player.ID())
-	r.updateStatus()
+	delete(r.players, _player.ID())
+	r.UpdateStatus(false)
 
 	return nil
 }
@@ -124,12 +124,12 @@ func (r *Room) GetPlayer(id string) (*player.Player, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	player, exists := r.players[id]
+	_player, exists := r.players[id]
 	if !exists {
 		return nil, fmt.Errorf("player not found in room")
 	}
 
-	return player, nil
+	return _player, nil
 }
 
 func (r *Room) GetPlayersCount() int {
@@ -164,10 +164,15 @@ func (r *Room) Broadcast(msg message.Message, excludedPlayerId interface{}) {
 	}
 }
 
-func (r *Room) updateStatus() {
-	if len(r.players) >= r.settings.NeedPlayers {
-		r.status = Ready
+func (r *Room) UpdateStatus(gameStarted bool) {
+	if !gameStarted {
+		if len(r.players) >= r.settings.NeedPlayers {
+			r.status = Ready
+		} else {
+			r.status = Waiting
+		}
 	} else {
-		r.status = Waiting
+		r.status = InGame
 	}
+
 }

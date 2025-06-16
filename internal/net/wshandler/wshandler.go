@@ -40,6 +40,7 @@ func (ws *WebSocket) WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Player %s connected", player.ID())
 
 	defer func() {
+		ws.handleEndGame(player)
 		ws.handleLeaveRoom(player)
 		conn.Close()
 	}()

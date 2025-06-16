@@ -106,7 +106,7 @@ func (a *Animation) Update(deltaTime float64) {
 	if a.timer > a.FrameTime {
 		a.timer = 0
 		a.currentFrameIdx = (a.currentFrameIdx + 1) % len(a.Frames)
-		if a.currentFrameIdx == 0 {
+		if a.currentFrameIdx == len(a.Frames)-1 {
 			a.isEnd = true
 		}
 	}

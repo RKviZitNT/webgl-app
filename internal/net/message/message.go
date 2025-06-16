@@ -50,10 +50,10 @@ type FighterControl struct {
 type FighterInfo struct {
 	ID            string
 	CharacterName string
-	Collider      primitives.Rect
+	HitBox        primitives.Rect
 	Control       FighterControl
 }
 
 type StartGameData struct {
-	FightersInfo []FighterInfo
+	FightersPositions map[string]int
 }

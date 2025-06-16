@@ -71,7 +71,7 @@ func handleStartGame(data interface{}) {
 	utils.ParseInterfaceToJSON(data, &gameData)
 
 	gm.Stop()
-	gm.Start(playerInfo.ID, gameData.FightersInfo)
+	gm.Start(playerInfo.ID, gameData.FightersPositions)
 }
 
 func handleEndGame(data interface{}) {
@@ -119,5 +119,4 @@ func handleGameState(data interface{}) {
 
 func handleError(data interface{}) {
 	gm.Stop()
-	jsfunc.ShowScreen(jsfunc.MainMenuScreen)
 }

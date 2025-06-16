@@ -4,6 +4,7 @@ package clienthandler
 
 import (
 	"syscall/js"
+	"webgl-app/internal/config"
 	"webgl-app/internal/game/game"
 	"webgl-app/internal/graphics/webgl"
 	"webgl-app/internal/jsfunc"
@@ -76,11 +77,18 @@ func connectWebSocket() {
 }
 
 func createLobby(this js.Value, args []js.Value) interface{} {
+	var needPlayers int
+	if config.ProgramConf.Debug {
+		needPlayers = 1
+	} else {
+		needPlayers = 2
+	}
+
 	msg := message.Message{
 		Type: message.CreateRoomMsg,
 		Data: room.RoomSettings{
 			MaxPlayers:  2,
-			NeedPlayers: 1,
+			NeedPlayers: needPlayers,
 		},
 	}
 
