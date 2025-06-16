@@ -2,7 +2,10 @@
 
 package webgl
 
-import "syscall/js"
+import (
+	"syscall/js"
+	"webgl-app/internal/config"
+)
 
 // ----- Texture queue -----
 
@@ -23,10 +26,10 @@ func newTextureQueue(program js.Value) *textureQueue {
 	}
 }
 
-func (tq *textureQueue) addCommand(bufferData []float32, texture *Texture) {
+func (tq *textureQueue) addCommand(bufferData []float32, tex *Texture) {
 	tq.queue = append(tq.queue, textureCommand{
 		bufferData: bufferData,
-		texture:    texture,
+		texture:    tex,
 	})
 }
 
@@ -34,7 +37,6 @@ func (tq *textureQueue) addCommand(bufferData []float32, texture *Texture) {
 
 type debugCommand struct {
 	bufferData []float32
-	thickness  float32
 	color      Color
 }
 
@@ -50,11 +52,10 @@ func newDebugQueue(program js.Value) *debugQueue {
 	}
 }
 
-func (dq *debugQueue) addCommand(bufferData []float32, thickness float32, color Color) {
+func (dq *debugQueue) addCommand(bufferData []float32, col Color) {
 	dq.queue = append(dq.queue, debugCommand{
 		bufferData: bufferData,
-		thickness:  thickness,
-		color:      color,
+		color:      col,
 	})
 }
 
@@ -99,6 +100,10 @@ func (ctx *GLContext) drawTextureQueue() {
 }
 
 func (ctx *GLContext) drawDebugQueue() {
+	if !config.ProgramConf.Debug {
+		return
+	}
+
 	gl := ctx.GL
 	program := ctx.debugQueue.program
 

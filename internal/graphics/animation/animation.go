@@ -10,19 +10,6 @@ import (
 	"webgl-app/internal/utils"
 )
 
-type AnimationType string
-
-const (
-	Idle    AnimationType = "idle"
-	Walk    AnimationType = "walk"
-	Run     AnimationType = "run"
-	Attack1 AnimationType = "attack1"
-	Attack2 AnimationType = "attack2"
-	Death   AnimationType = "death"
-	Hurt    AnimationType = "hurt"
-	Jump    AnimationType = "jump"
-)
-
 type AnimationsParameters struct {
 	Width            int `json:"width"`
 	Height           int `json:"height"`
@@ -43,18 +30,19 @@ type AnimationsData struct {
 }
 
 type Animation struct {
-	Frames          []*webgl.Sprite
-	FrameTime       float64
-	timer           float64
-	currentFrameIdx int
+	Frames            []*webgl.Sprite
+	FrameTime         float64
+	CurrentFrameIndex int
+	IsEnd             bool
+	timer             float64
 }
 
-func NewAnimation(aType AnimationType, data AnimationsData, texture *webgl.Texture, scale float64, offset primitives.Vec2) *Animation {
-	if texture == nil {
+func NewAnimation(aName string, data AnimationsData, tex *webgl.Texture, scale float64, offset primitives.Vec2, specularOffset primitives.Vec2) *Animation {
+	if tex == nil {
 		return nil
 	}
 
-	aData := data.Animations[string(aType)]
+	aData := data.Animations[aName]
 
 	frameWidth := data.Parameters.Width / data.Parameters.FrameWidthCount
 	frameHeight := data.Parameters.Height / data.Parameters.FrameHeigntCount
@@ -70,27 +58,27 @@ func NewAnimation(aType AnimationType, data AnimationsData, texture *webgl.Textu
 
 		rect := primitives.NewRect(float64(col*frameWidth), float64(row*frameHeight), float64(frameWidth), float64(frameHeight))
 
-		frames = append(frames, webgl.NewSprite(texture, &rect, scale, offset))
+		frames = append(frames, webgl.NewSprite(tex, &rect, scale, offset, specularOffset))
 	}
 
 	return &Animation{
-		Frames:          frames,
-		FrameTime:       aData.FrameTime,
-		timer:           0,
-		currentFrameIdx: 0,
+		Frames:            frames,
+		FrameTime:         aData.FrameTime,
+		CurrentFrameIndex: 0,
+		timer:             0,
 	}
 }
 
-func NewAnimationsSet(aTypes []AnimationType, metadata string, texture *webgl.Texture, scale float64, offset primitives.Vec2) (map[AnimationType]*Animation, error) {
+func NewAnimationsSet(metadata string, tex *webgl.Texture, scale float64, offset primitives.Vec2, specularOffset primitives.Vec2) (map[string]*Animation, error) {
 	var data AnimationsData
 	err := utils.ParseStringToJSON(metadata, &data)
 	if err != nil {
 		return nil, err
 	}
 
-	animations := make(map[AnimationType]*Animation)
-	for _, aType := range aTypes {
-		animations[aType] = NewAnimation(aType, data, texture, scale, offset)
+	animations := make(map[string]*Animation)
+	for aName, _ := range data.Animations {
+		animations[aName] = NewAnimation(aName, data, tex, scale, offset, specularOffset)
 	}
 	return animations, nil
 }
@@ -100,7 +88,7 @@ func (a *Animation) Reset() {
 		return
 	}
 	a.timer = 0
-	a.currentFrameIdx = 0
+	a.CurrentFrameIndex = 0
 }
 
 func (a *Animation) Update(deltaTime float64) {
@@ -117,7 +105,10 @@ func (a *Animation) Update(deltaTime float64) {
 	a.timer += deltaTime
 	if a.timer > a.FrameTime {
 		a.timer = 0
-		a.currentFrameIdx = (a.currentFrameIdx + 1) % len(a.Frames)
+		a.CurrentFrameIndex = (a.CurrentFrameIndex + 1) % len(a.Frames)
+		if a.CurrentFrameIndex == len(a.Frames)-1 {
+			a.IsEnd = true
+		}
 	}
 }
 
@@ -132,14 +123,14 @@ func (a *Animation) GetCurrentFrame() *webgl.Sprite {
 		return nil
 	}
 
-	if a.currentFrameIdx >= len(a.Frames) {
-		jsfunc.LogError(fmt.Sprintf("Animation.GetCurrentFrame: invalid frame index %d/%d", a.currentFrameIdx, len(a.Frames)))
+	if a.CurrentFrameIndex >= len(a.Frames) {
+		jsfunc.LogError(fmt.Sprintf("Animation.GetCurrentFrame: invalid frame index %d/%d", a.CurrentFrameIndex, len(a.Frames)))
 		return nil
 	}
 
-	frame := a.Frames[a.currentFrameIdx]
+	frame := a.Frames[a.CurrentFrameIndex]
 	if frame == nil {
-		jsfunc.LogError(fmt.Sprintf("Animation.GetCurrentFrame: nil frame at index %d", a.currentFrameIdx))
+		jsfunc.LogError(fmt.Sprintf("Animation.GetCurrentFrame: nil frame at index %d", a.CurrentFrameIndex))
 	}
 
 	return frame

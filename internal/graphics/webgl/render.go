@@ -3,11 +3,12 @@
 package webgl
 
 import (
+	"webgl-app/internal/config"
 	"webgl-app/internal/graphics/primitives"
 	"webgl-app/internal/jsfunc"
 )
 
-func (ctx *GLContext) RenderSprite(sprite *Sprite, drawRect primitives.Rect) {
+func (ctx *GLContext) RenderSprite(sprite *Sprite, drawRect primitives.Rect, specular bool) {
 	if sprite == nil {
 		jsfunc.LogError("RenderSprite: sprite is nil")
 		return
@@ -24,7 +25,11 @@ func (ctx *GLContext) RenderSprite(sprite *Sprite, drawRect primitives.Rect) {
 		return
 	}
 
-	drawRect = drawRect.Move(sprite.Offset)
+	if specular {
+		drawRect.Pos = drawRect.Move(sprite.SpecularOffset)
+	} else {
+		drawRect.Pos = drawRect.Move(sprite.Offset)
+	}
 
 	var (
 		x1, y1, x2, y2 float32
@@ -52,6 +57,10 @@ func (ctx *GLContext) RenderSprite(sprite *Sprite, drawRect primitives.Rect) {
 		v2 = float32(sprite.Rect.Bottom()) / float32(texSize.Y)
 	}
 
+	if specular {
+		u1, u2 = u2, u1
+	}
+
 	bufferData := []float32{
 		x1, y1, u1, v1,
 		x2, y1, u2, v1,
@@ -62,7 +71,11 @@ func (ctx *GLContext) RenderSprite(sprite *Sprite, drawRect primitives.Rect) {
 	ctx.textureQueue.addCommand(bufferData, sprite.Texture)
 }
 
-func (ctx *GLContext) RenderRect(rect primitives.Rect, thickness float32, color Color) {
+func (ctx *GLContext) RenderRect(rect primitives.Rect, color Color) {
+	if !config.ProgramConf.Debug {
+		return
+	}
+
 	var (
 		x1, y1, x2, y2 float32
 	)
@@ -79,5 +92,5 @@ func (ctx *GLContext) RenderRect(rect primitives.Rect, thickness float32, color 
 		x1, y2,
 	}
 
-	ctx.debugQueue.addCommand(bufferData, thickness, color)
+	ctx.debugQueue.addCommand(bufferData, color)
 }

@@ -14,18 +14,18 @@ type Texture struct {
 	height  int
 }
 
-func NewTexture(glCtx *GLContext, image js.Value) *Texture {
-	if image.IsUndefined() || image.IsNull() {
+func NewTexture(glCtx *GLContext, img js.Value) *Texture {
+	if img.IsUndefined() || img.IsNull() {
 		jsfunc.LogError("NewTexture: image is undefined or null")
 		return nil
 	}
 
 	gl := glCtx.GL
 
-	texture := gl.Call("createTexture")
-	gl.Call("bindTexture", gl.Get("TEXTURE_2D"), texture)
+	tex := gl.Call("createTexture")
+	gl.Call("bindTexture", gl.Get("TEXTURE_2D"), tex)
 
-	gl.Call("texImage2D", gl.Get("TEXTURE_2D"), 0, gl.Get("RGBA"), gl.Get("RGBA"), gl.Get("UNSIGNED_BYTE"), image)
+	gl.Call("texImage2D", gl.Get("TEXTURE_2D"), 0, gl.Get("RGBA"), gl.Get("RGBA"), gl.Get("UNSIGNED_BYTE"), img)
 
 	gl.Call("texParameteri", gl.Get("TEXTURE_2D"), gl.Get("TEXTURE_WRAP_S"), gl.Get("CLAMP_TO_EDGE"))
 	gl.Call("texParameteri", gl.Get("TEXTURE_2D"), gl.Get("TEXTURE_WRAP_T"), gl.Get("CLAMP_TO_EDGE"))
@@ -33,9 +33,9 @@ func NewTexture(glCtx *GLContext, image js.Value) *Texture {
 	gl.Call("texParameteri", gl.Get("TEXTURE_2D"), gl.Get("TEXTURE_MAG_FILTER"), gl.Get("NEAREST"))
 
 	return &Texture{
-		texture: texture,
-		width:   image.Get("width").Int(),
-		height:  image.Get("height").Int(),
+		texture: tex,
+		width:   img.Get("width").Int(),
+		height:  img.Get("height").Int(),
 	}
 }
 

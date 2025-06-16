@@ -44,14 +44,14 @@ func NewWebGLContext(canvasId string) (*GLContext, error) {
 
 func (ctx *GLContext) InitWebGL() error {
 	jsfunc.SetLoadingProgress(0, "Loading texture shaders...")
-	textureVertexSrc, textureFragmentSrc, err := ctx.loadShaders(config.ShadersConf.TextureShaders)
+	texVertSrc, texFragSrc, err := ctx.loadShaders(config.ShadersConf.TextureShaders)
 	if err != nil {
 		return fmt.Errorf("failed to load texture shaders: %v", err)
 	}
 	jsfunc.LogInfo("Texture shaders loaded")
 
 	jsfunc.SetLoadingProgress(2, "Compiling texture shaders...")
-	texVertShader, texFragShader, err := ctx.compileShaders(textureVertexSrc, textureFragmentSrc)
+	texVertShader, texFragShader, err := ctx.compileShaders(texVertSrc, texFragSrc)
 	if err != nil {
 		return fmt.Errorf("texture shaders compilation failed: %v", err)
 	}
@@ -67,14 +67,14 @@ func (ctx *GLContext) InitWebGL() error {
 
 	if config.ProgramConf.Debug {
 		jsfunc.SetLoadingProgress(4, "Loading debug shaders...")
-		debugVertexSrc, debugFragmentSrc, err := ctx.loadShaders(config.ShadersConf.DebugShaders)
+		debugVertSrc, debugFragSrc, err := ctx.loadShaders(config.ShadersConf.DebugShaders)
 		if err != nil {
 			return fmt.Errorf("failed to load debug shaders: %v", err)
 		}
 		jsfunc.LogInfo("Debug shaders loaded")
 
 		jsfunc.SetLoadingProgress(6, "Compiling debug shaders...")
-		debugVertShader, debugFragShader, err := ctx.compileShaders(debugVertexSrc, debugFragmentSrc)
+		debugVertShader, debugFragShader, err := ctx.compileShaders(debugVertSrc, debugFragSrc)
 		if err != nil {
 			return fmt.Errorf("debug shaders compilation failed: %v", err)
 		}

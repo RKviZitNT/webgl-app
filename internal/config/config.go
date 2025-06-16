@@ -12,14 +12,14 @@ import (
 // ----- Program config -----
 
 type Window struct {
-	Width     float64 `json:"width"`
-	Height    float64 `json:"height"`
-	FrameRate int64   `json:"frame_rate"`
+	Width     float64
+	Height    float64
+	FrameRate int64
 }
 
 type ProgramConfig struct {
-	Debug  bool   `json:"debug"`
-	Window Window `json:"window"`
+	Debug  bool
+	Window Window
 }
 
 // ----- Shaders config -------
@@ -49,30 +49,29 @@ var (
 	AssetsConf  AssetsConfig
 )
 
-func LoadConfigs(programConfigPath, shadersConfigPath, assetsConfigPath string) error {
+func LoadConfigs(shadersConfigPath, assetsConfigPath string) error {
 	var (
 		loadErr error
 	)
 
+	ProgramConf = ProgramConfig{
+		Debug: true,
+		Window: Window{
+			Width:     1600,
+			Height:    900,
+			FrameRate: 60,
+		},
+	}
+
 	done := make(chan struct{}, 0)
 
-	resourceloader.LoadFile(programConfigPath,
+	resourceloader.LoadFile(shadersConfigPath,
 		func(src js.Value) {
-			loadErr = utils.ParseStringToJSON(src.String(), &ProgramConf)
-
-			resourceloader.LoadFile(shadersConfigPath,
+			loadErr = utils.ParseStringToJSON(src.String(), &ShadersConf)
+			resourceloader.LoadFile(assetsConfigPath,
 				func(src js.Value) {
-					loadErr = utils.ParseStringToJSON(src.String(), &ShadersConf)
-
-					resourceloader.LoadFile(assetsConfigPath,
-						func(src js.Value) {
-							loadErr = utils.ParseStringToJSON(src.String(), &AssetsConf)
-							close(done)
-						},
-						func(err error) {
-							loadErr = err
-							close(done)
-						})
+					loadErr = utils.ParseStringToJSON(src.String(), &AssetsConf)
+					close(done)
 				},
 				func(err error) {
 					loadErr = err

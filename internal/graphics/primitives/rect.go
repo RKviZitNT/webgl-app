@@ -60,11 +60,8 @@ func (r *Rect) Height() float64 {
 	return r.Size.Y
 }
 
-func (r *Rect) Move(offset Vec2) Rect {
-	return Rect{
-		Pos:  r.Pos.AddVec2(offset),
-		Size: r.Size,
-	}
+func (r *Rect) Move(offset Vec2) Vec2 {
+	return r.Pos.AddVec2(offset)
 }
 
 func (r *Rect) Intersection(other Rect) bool {

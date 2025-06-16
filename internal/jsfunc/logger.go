@@ -4,14 +4,14 @@ package jsfunc
 
 import "syscall/js"
 
-func LogInfo(msg string) {
+func LogInfo(msg interface{}) {
 	js.Global().Get("console").Call("log", msg)
 }
 
-func LogWarn(msg string) {
+func LogWarn(msg interface{}) {
 	js.Global().Get("console").Call("warn", msg)
 }
 
-func LogError(msg string) {
+func LogError(msg interface{}) {
 	js.Global().Get("console").Call("error", msg)
 }
