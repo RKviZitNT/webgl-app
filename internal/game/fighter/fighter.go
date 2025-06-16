@@ -37,20 +37,21 @@ type HoldingKeys struct {
 }
 
 type FighterProperties struct {
-	Specular                bool
-	HealthPoints            float64
-	dir                     primitives.Vec2
-	speed                   float64
-	jumpSpeed               float64
-	velocity                float64
-	gravity                 float64
-	invulnerabilityCooldown float64
-	invulnerability         bool
-	move                    bool
-	jump                    bool
-	attack                  bool
-	hit                     bool
-	death                   bool
+	Specular             bool
+	HealthPoints         float64
+	dir                  primitives.Vec2
+	speed                float64
+	jumpSpeed            float64
+	velocity             float64
+	gravity              float64
+	invulnerableCooldown float64
+	attackCooldown       float64
+	move                 bool
+	jump                 bool
+	attack               bool
+	comboAttack          bool
+	hit                  bool
+	death                bool
 }
 
 type Fighter struct {
@@ -105,13 +106,14 @@ func (f *Fighter) Draw(glCtx *webgl.GLContext) {
 }
 
 func (f *Fighter) Update(deltaTime time.Duration, enemyFighter *Fighter) {
+	if f.State == Death && f.Animation.IsEnd {
+		return
+	}
+
 	var dx, dy float64
 
 	f.handleCooldowns(deltaTime.Seconds())
-
-	if !f.Properties.invulnerability {
-		f.handleEnemyAttack(enemyFighter.Colliders.Attack, enemyFighter.Character.Properies.AttackDamage)
-	}
+	f.handleEnemyAttack(enemyFighter.Colliders.Attack, enemyFighter)
 
 	f.Properties.move = false
 	if !f.Properties.death && !f.Properties.hit {
@@ -124,32 +126,28 @@ func (f *Fighter) Update(deltaTime time.Duration, enemyFighter *Fighter) {
 				dx += 1
 				f.Properties.Specular = false
 			}
-			if !f.Properties.jump {
-				if f.Control.Jump {
-					if !f.HoldingKeys.Jump {
-						f.jump()
-						f.HoldingKeys.Jump = true
-					}
-				} else {
-					f.HoldingKeys.Jump = false
-				}
-
-			}
-		}
-		if !f.Properties.jump {
-			if f.Control.Attack {
-				if !f.HoldingKeys.Attack {
-					f.attack()
-					f.HoldingKeys.Attack = true
+			if f.Control.Jump {
+				if !f.HoldingKeys.Jump {
+					f.jump()
+					f.HoldingKeys.Jump = true
 				}
 			} else {
-				f.HoldingKeys.Attack = false
+				f.HoldingKeys.Jump = false
 			}
+		}
+		if f.Control.Attack {
+			if !f.HoldingKeys.Attack {
+				f.attack()
+				f.HoldingKeys.Attack = true
+			}
+		} else {
+			f.HoldingKeys.Attack = false
 		}
 	}
 
-	f.move(dx, dy, deltaTime.Seconds(), enemyFighter.Colliders.HitBox.Center())
-	f.handleWorldCollision()
+	f.move(&dx, enemyFighter.Colliders.HitBox.Center())
+	f.gravity(&dy, deltaTime.Seconds())
+	f.updatePos(dx, dy, deltaTime.Seconds())
 
 	f.handleState()
 	f.updateAnimationState()
@@ -157,9 +155,9 @@ func (f *Fighter) Update(deltaTime time.Duration, enemyFighter *Fighter) {
 	f.Animation.Update(float64(deltaTime.Milliseconds()))
 }
 
-func (f *Fighter) move(dx, dy, deltaTime float64, efc primitives.Vec2) {
-	if dx == 0 {
-		if !f.Properties.attack {
+func (f *Fighter) move(dx *float64, efc primitives.Vec2) {
+	if *dx == 0 {
+		if !f.Properties.attack && !f.Properties.death {
 			f.handleSpecular(efc)
 		}
 		f.Properties.move = false
@@ -167,81 +165,142 @@ func (f *Fighter) move(dx, dy, deltaTime float64, efc primitives.Vec2) {
 		f.Properties.move = true
 	}
 
+	*dx *= f.Properties.speed
+
+}
+
+func (f *Fighter) gravity(dy *float64, deltaTime float64) {
 	f.Properties.velocity += f.Properties.gravity * deltaTime
+	*dy += f.Properties.velocity
+}
 
-	dx *= f.Properties.speed
-	dy += f.Properties.velocity
-
+func (f *Fighter) updatePos(dx, dy, deltaTime float64) {
 	dir := primitives.NewVec2(dx, dy)
 	offset := dir.MulValue(deltaTime)
 
 	newPos := f.Colliders.HitBox.Move(offset)
 	f.Colliders.HitBox.Pos = newPos
 
-	if f.Properties.attack {
-		if !f.Properties.Specular {
-			f.Colliders.Attack = primitives.NewRect(
-				f.Colliders.HitBox.Right(),
-				f.Colliders.HitBox.Top()-f.Character.Properies.AttackUp,
-				f.Character.Properies.AttackRange,
-				f.Character.Properies.AttackHeight,
-			)
-		} else {
-			f.Colliders.Attack = primitives.NewRect(
-				f.Colliders.HitBox.Left()-f.Character.Properies.AttackRange,
-				f.Colliders.HitBox.Top()-f.Character.Properies.AttackUp,
-				f.Character.Properies.AttackRange,
-				f.Character.Properies.AttackHeight,
-			)
-		}
-	} else {
-		f.Colliders.Attack = primitives.NewRect(0, 0, 0, 0)
-	}
+	f.handleWorldCollision()
 
+	f.Colliders.Attack = primitives.NewRect(0, 0, 0, 0)
+
+	if f.Properties.attack {
+		switch f.State {
+		case Attack1:
+			if f.Animation.CurrentFrameIndex >= f.Character.Properies.Attack1FrameIndex {
+				if !f.Properties.Specular {
+					f.Colliders.Attack = primitives.NewRect(
+						f.Colliders.HitBox.Right(),
+						f.Colliders.HitBox.Top()-f.Character.Properies.Attack1Up,
+						f.Character.Properies.Attack1Range,
+						f.Character.Properies.Attack1Height,
+					)
+				} else {
+					f.Colliders.Attack = primitives.NewRect(
+						f.Colliders.HitBox.Left()-f.Character.Properies.Attack1Range,
+						f.Colliders.HitBox.Top()-f.Character.Properies.Attack1Up,
+						f.Character.Properies.Attack1Range,
+						f.Character.Properies.Attack1Height,
+					)
+				}
+			}
+
+		case Attack2:
+			if f.Animation.CurrentFrameIndex >= f.Character.Properies.Attack2FrameIndex {
+				if !f.Properties.Specular {
+					f.Colliders.Attack = primitives.NewRect(
+						f.Colliders.HitBox.Right(),
+						f.Colliders.HitBox.Top()-f.Character.Properies.Attack2Up,
+						f.Character.Properies.Attack2Range,
+						f.Character.Properies.Attack2Height,
+					)
+				} else {
+					f.Colliders.Attack = primitives.NewRect(
+						f.Colliders.HitBox.Left()-f.Character.Properies.Attack2Range,
+						f.Colliders.HitBox.Top()-f.Character.Properies.Attack2Up,
+						f.Character.Properies.Attack2Range,
+						f.Character.Properies.Attack2Height,
+					)
+				}
+			}
+		}
+	}
 }
 
 func (f *Fighter) jump() {
+	if f.Properties.jump {
+		return
+	}
 	f.Properties.velocity = -f.Properties.jumpSpeed
 	f.Properties.jump = true
 }
 
 func (f *Fighter) attack() {
-	f.Properties.attack = true
-}
+	if f.Properties.attackCooldown > 0 || f.Properties.jump {
+		return
+	}
 
-func (f *Fighter) handleCooldowns(deltaTime float64) {
-	if f.Properties.invulnerabilityCooldown > 0 {
-		f.Properties.invulnerability = true
-		f.Properties.invulnerabilityCooldown -= deltaTime
+	if f.Properties.attack {
+		f.Properties.comboAttack = true
 	} else {
-		f.Properties.invulnerability = false
+		f.Properties.attack = true
 	}
 }
 
-func (f *Fighter) handleEnemyAttack(attackCollider primitives.Rect, attackDamage float64) {
-	if f.Properties.death || f.Properties.hit || (attackCollider.Width() <= 0 && attackCollider.Height() <= 0) {
+func (f *Fighter) handleCooldowns(deltaTime float64) {
+	if f.Properties.invulnerableCooldown > 0 {
+		f.Properties.invulnerableCooldown -= deltaTime
+	}
+	if f.Properties.attackCooldown > 0 {
+		f.Properties.attackCooldown -= deltaTime
+	}
+}
+
+func (f *Fighter) handleEnemyAttack(attackCollider primitives.Rect, enemyFighter *Fighter) {
+	if f.Properties.invulnerableCooldown > 0 || f.Properties.death || f.Properties.hit || (attackCollider.Width() <= 0 && attackCollider.Height() <= 0) {
 		return
 	}
 
 	if f.Colliders.HitBox.Intersection(attackCollider) {
-		f.Properties.HealthPoints -= attackDamage
-		f.Properties.invulnerabilityCooldown = 1
-		f.Properties.hit = true
+		if enemyFighter.State == Attack1 {
+			f.Properties.HealthPoints -= enemyFighter.Character.Properies.Attack1Damage
+		}
+		if enemyFighter.State == Attack2 {
+			f.Properties.HealthPoints -= enemyFighter.Character.Properies.Attack2Damage
+		}
+
+		if f.Properties.HealthPoints <= 0 {
+			f.Properties.HealthPoints = 0
+			f.Properties.death = true
+		} else {
+			f.Properties.hit = true
+		}
 	}
 }
 
 func (f *Fighter) handleState() {
-	if f.Properties.hit {
+	if f.Properties.death {
+		f.State = Death
+	} else if f.Properties.hit {
 		if f.State != Hit {
 			f.State = Hit
-		} else if f.Animation.IsEnd() {
+		} else if f.Animation.IsEnd {
 			f.Properties.hit = false
 		}
 	} else if f.Properties.attack {
-		if f.State != Attack1 {
+		if f.State != Attack1 && f.State != Attack2 {
 			f.State = Attack1
-		} else if f.Animation.IsEnd() {
-			f.Properties.attack = false
+		} else if f.Animation.IsEnd {
+			if f.Properties.comboAttack {
+				f.State = Attack2
+				if f.Animation.IsEnd {
+					f.Properties.comboAttack = false
+				}
+			} else {
+				f.Properties.attackCooldown = 0.3
+				f.Properties.attack = false
+			}
 		}
 	} else if f.Properties.jump {
 		f.State = Jump

@@ -23,7 +23,7 @@
             "frame_count": 8
         },
         "attack2": {
-            "frame_time": 100,
+            "frame_time": 120,
             "first_frame": 23,
             "frame_count": 4
         },

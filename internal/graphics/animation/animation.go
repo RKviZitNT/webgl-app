@@ -30,11 +30,11 @@ type AnimationsData struct {
 }
 
 type Animation struct {
-	Frames          []*webgl.Sprite
-	FrameTime       float64
-	timer           float64
-	currentFrameIdx int
-	isEnd           bool
+	Frames            []*webgl.Sprite
+	FrameTime         float64
+	CurrentFrameIndex int
+	IsEnd             bool
+	timer             float64
 }
 
 func NewAnimation(aName string, data AnimationsData, tex *webgl.Texture, scale float64, offset primitives.Vec2, specularOffset primitives.Vec2) *Animation {
@@ -62,10 +62,10 @@ func NewAnimation(aName string, data AnimationsData, tex *webgl.Texture, scale f
 	}
 
 	return &Animation{
-		Frames:          frames,
-		FrameTime:       aData.FrameTime,
-		timer:           0,
-		currentFrameIdx: 0,
+		Frames:            frames,
+		FrameTime:         aData.FrameTime,
+		CurrentFrameIndex: 0,
+		timer:             0,
 	}
 }
 
@@ -88,7 +88,7 @@ func (a *Animation) Reset() {
 		return
 	}
 	a.timer = 0
-	a.currentFrameIdx = 0
+	a.CurrentFrameIndex = 0
 }
 
 func (a *Animation) Update(deltaTime float64) {
@@ -105,9 +105,9 @@ func (a *Animation) Update(deltaTime float64) {
 	a.timer += deltaTime
 	if a.timer > a.FrameTime {
 		a.timer = 0
-		a.currentFrameIdx = (a.currentFrameIdx + 1) % len(a.Frames)
-		if a.currentFrameIdx == len(a.Frames)-1 {
-			a.isEnd = true
+		a.CurrentFrameIndex = (a.CurrentFrameIndex + 1) % len(a.Frames)
+		if a.CurrentFrameIndex == len(a.Frames)-1 {
+			a.IsEnd = true
 		}
 	}
 }
@@ -123,19 +123,15 @@ func (a *Animation) GetCurrentFrame() *webgl.Sprite {
 		return nil
 	}
 
-	if a.currentFrameIdx >= len(a.Frames) {
-		jsfunc.LogError(fmt.Sprintf("Animation.GetCurrentFrame: invalid frame index %d/%d", a.currentFrameIdx, len(a.Frames)))
+	if a.CurrentFrameIndex >= len(a.Frames) {
+		jsfunc.LogError(fmt.Sprintf("Animation.GetCurrentFrame: invalid frame index %d/%d", a.CurrentFrameIndex, len(a.Frames)))
 		return nil
 	}
 
-	frame := a.Frames[a.currentFrameIdx]
+	frame := a.Frames[a.CurrentFrameIndex]
 	if frame == nil {
-		jsfunc.LogError(fmt.Sprintf("Animation.GetCurrentFrame: nil frame at index %d", a.currentFrameIdx))
+		jsfunc.LogError(fmt.Sprintf("Animation.GetCurrentFrame: nil frame at index %d", a.CurrentFrameIndex))
 	}
 
 	return frame
-}
-
-func (a *Animation) IsEnd() bool {
-	return a.isEnd
 }

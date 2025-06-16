@@ -14,11 +14,17 @@ const (
 )
 
 type CharacterProperties struct {
-	HealthPoints float64
-	AttackDamage float64
-	AttackRange  float64
-	AttackHeight float64
-	AttackUp     float64
+	HealthPoints      float64
+	Attack1Damage     float64
+	Attack2Damage     float64
+	Attack1Range      float64
+	Attack2Range      float64
+	Attack1Height     float64
+	Attack2Height     float64
+	Attack1Up         float64
+	Attack2Up         float64
+	Attack1FrameIndex int
+	Attack2FrameIndex int
 }
 
 type Character struct {

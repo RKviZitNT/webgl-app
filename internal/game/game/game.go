@@ -80,11 +80,17 @@ func (g *Game) createCharacters(assets *assetsmanager.AssetsManager) error {
 		return err
 	}
 	warriorCharProperties := character.CharacterProperties{
-		HealthPoints: 100,
-		AttackDamage: 10,
-		AttackRange:  110,
-		AttackHeight: 160,
-		AttackUp:     40,
+		HealthPoints:      100,
+		Attack1Damage:     10,
+		Attack2Damage:     5,
+		Attack1Range:      110,
+		Attack2Range:      70,
+		Attack1Height:     160,
+		Attack2Height:     60,
+		Attack1Up:         50,
+		Attack2Up:         40,
+		Attack1FrameIndex: 5,
+		Attack2FrameIndex: 2,
 	}
 	warriorChar := character.NewCharacter(character.Warrior, warriorAnim["idle"].GetCurrentFrame(), warriorCharProperties)
 	warriorChar.SetAnimations(warriorAnim)
@@ -111,8 +117,8 @@ func (g *Game) Start(playerId string, fightersPositions map[string]int) {
 	}))
 
 	positions := []float64{
-		config.ProgramConf.Window.Height / 4,
-		config.ProgramConf.Window.Height - config.ProgramConf.Window.Height/4,
+		config.ProgramConf.Window.Width / 4,
+		config.ProgramConf.Window.Width - config.ProgramConf.Window.Width/4,
 	}
 
 	for id, fighterPos := range fightersPositions {
@@ -135,6 +141,7 @@ func (g *Game) Start(playerId string, fightersPositions map[string]int) {
 func (g *Game) Stop() {
 	g.running = false
 	g.keys = make(map[string]bool)
+	g.fighters = make([]*fighter.Fighter, 2)
 }
 
 func (g *Game) renderLoop() {
