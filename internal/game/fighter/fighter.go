@@ -37,6 +37,7 @@ type HoldingKeys struct {
 }
 
 type FighterProperties struct {
+	IsWin                bool
 	Specular             bool
 	HealthPoints         float64
 	dir                  primitives.Vec2
@@ -72,6 +73,7 @@ func NewFighter(char *character.Character, posX float64) *Fighter {
 	colliders.HitBox.SetCenter(primitives.NewVec2(posX, config.ProgramConfig.Window.Height))
 
 	Properties := FighterProperties{
+		IsWin:        true,
 		HealthPoints: char.Properies.HealthPoints,
 		dir:          primitives.Vec2{},
 		jumpSpeed:    1500,
@@ -101,8 +103,10 @@ func (f *Fighter) updateAnimationState() {
 func (f *Fighter) Draw(glCtx *webgl.GLContext) {
 	glCtx.RenderSprite(f.Animation.GetCurrentFrame(), f.Colliders.HitBox, f.Properties.Specular)
 
-	glCtx.RenderRect(f.Colliders.HitBox, webgl.ColorRed(1.0))
-	glCtx.RenderRect(f.Colliders.Attack, webgl.ColorGreen(1.0))
+	if config.ProgramConfig.Debug {
+		glCtx.RenderRect(f.Colliders.HitBox, webgl.ColorBlue(1.0))
+		glCtx.RenderRect(f.Colliders.Attack, webgl.ColorRed(1.0))
+	}
 }
 
 func (f *Fighter) Update(deltaTime time.Duration, enemyFighter *Fighter) {
@@ -112,8 +116,10 @@ func (f *Fighter) Update(deltaTime time.Duration, enemyFighter *Fighter) {
 
 	if f.Properties.HealthPoints <= 0 {
 		f.Properties.death = true
+		f.Properties.IsWin = false
 	} else {
 		f.Properties.death = false
+		f.Properties.IsWin = true
 	}
 
 	var dx, dy float64
@@ -194,39 +200,39 @@ func (f *Fighter) updatePos(dx, dy, deltaTime float64) {
 	if f.Properties.attack {
 		switch f.State {
 		case Attack1:
-			if f.Animation.CurrentFrameIndex >= f.Character.Properies.Attack1FrameIndex {
+			if f.Animation.CurrentFrameIndex == f.Character.Properies.Attack1.FrameIndex {
 				if !f.Properties.Specular {
 					f.Colliders.Attack = primitives.NewRect(
 						f.Colliders.HitBox.Right(),
-						f.Colliders.HitBox.Top()-f.Character.Properies.Attack1Up,
-						f.Character.Properies.Attack1Range,
-						f.Character.Properies.Attack1Height,
+						f.Colliders.HitBox.Top()-f.Character.Properies.Attack1.Up,
+						f.Character.Properies.Attack1.Range,
+						f.Character.Properies.Attack1.Height,
 					)
 				} else {
 					f.Colliders.Attack = primitives.NewRect(
-						f.Colliders.HitBox.Left()-f.Character.Properies.Attack1Range,
-						f.Colliders.HitBox.Top()-f.Character.Properies.Attack1Up,
-						f.Character.Properies.Attack1Range,
-						f.Character.Properies.Attack1Height,
+						f.Colliders.HitBox.Left()-f.Character.Properies.Attack1.Range,
+						f.Colliders.HitBox.Top()-f.Character.Properies.Attack1.Up,
+						f.Character.Properies.Attack1.Range,
+						f.Character.Properies.Attack1.Height,
 					)
 				}
 			}
 
 		case Attack2:
-			if f.Animation.CurrentFrameIndex >= f.Character.Properies.Attack2FrameIndex {
+			if f.Animation.CurrentFrameIndex == f.Character.Properies.Attack2.FrameIndex {
 				if !f.Properties.Specular {
 					f.Colliders.Attack = primitives.NewRect(
 						f.Colliders.HitBox.Right(),
-						f.Colliders.HitBox.Top()-f.Character.Properies.Attack2Up,
-						f.Character.Properies.Attack2Range,
-						f.Character.Properies.Attack2Height,
+						f.Colliders.HitBox.Top()-f.Character.Properies.Attack2.Up,
+						f.Character.Properies.Attack2.Range,
+						f.Character.Properies.Attack2.Height,
 					)
 				} else {
 					f.Colliders.Attack = primitives.NewRect(
-						f.Colliders.HitBox.Left()-f.Character.Properies.Attack2Range,
-						f.Colliders.HitBox.Top()-f.Character.Properies.Attack2Up,
-						f.Character.Properies.Attack2Range,
-						f.Character.Properies.Attack2Height,
+						f.Colliders.HitBox.Left()-f.Character.Properies.Attack2.Range,
+						f.Colliders.HitBox.Top()-f.Character.Properies.Attack2.Up,
+						f.Character.Properies.Attack2.Range,
+						f.Character.Properies.Attack2.Height,
 					)
 				}
 			}
@@ -270,10 +276,12 @@ func (f *Fighter) handleEnemyAttack(attackCollider primitives.Rect, enemyFighter
 
 	if f.Colliders.HitBox.Intersection(attackCollider) {
 		if enemyFighter.State == Attack1 {
-			f.Properties.HealthPoints -= enemyFighter.Character.Properies.Attack1Damage
+			f.Properties.HealthPoints -= enemyFighter.Character.Properies.Attack1.Damage
+			f.Properties.invulnerableCooldown = 0.2
 		}
 		if enemyFighter.State == Attack2 {
-			f.Properties.HealthPoints -= enemyFighter.Character.Properies.Attack2Damage
+			f.Properties.HealthPoints -= enemyFighter.Character.Properies.Attack2.Damage
+			f.Properties.invulnerableCooldown = 0.3
 		}
 
 		if f.Properties.HealthPoints <= 0 {
@@ -294,11 +302,11 @@ func (f *Fighter) handleState() {
 			f.Properties.hit = false
 		}
 	} else if f.Properties.attack {
-		if f.State != Attack1 && f.State != Attack2 {
-			f.State = Attack1
+		if f.State != Attack2 && f.State != Attack1 {
+			f.State = Attack2
 		} else if f.Animation.IsEnd {
 			if f.Properties.comboAttack {
-				f.State = Attack2
+				f.State = Attack1
 				if f.Animation.IsEnd {
 					f.Properties.comboAttack = false
 				}

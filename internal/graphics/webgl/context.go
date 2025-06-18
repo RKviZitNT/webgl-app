@@ -44,7 +44,7 @@ func NewWebGLContext(canvasId string) (*GLContext, error) {
 
 func (ctx *GLContext) InitWebGL() error {
 	var shadersSources ShadersSources
-	err := config.LoadSources("shaders-manifest.json", &shadersSources)
+	err := config.LoadSources("shaders/shaders-manifest.json", &shadersSources)
 	if err != nil {
 		return err
 	}

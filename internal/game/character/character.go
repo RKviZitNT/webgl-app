@@ -7,34 +7,28 @@ import (
 	"webgl-app/internal/graphics/webgl"
 )
 
-type CharacterName string
-
-const (
-	Warrior CharacterName = "warrior"
-)
+type AttackProperties struct {
+	FrameIndex int
+	Damage     float64
+	Range      float64
+	Height     float64
+	Up         float64
+}
 
 type CharacterProperties struct {
-	HealthPoints      float64
-	Attack1Damage     float64
-	Attack2Damage     float64
-	Attack1Range      float64
-	Attack2Range      float64
-	Attack1Height     float64
-	Attack2Height     float64
-	Attack1Up         float64
-	Attack2Up         float64
-	Attack1FrameIndex int
-	Attack2FrameIndex int
+	HealthPoints float64
+	Attack1      AttackProperties
+	Attack2      AttackProperties
 }
 
 type Character struct {
-	Name       CharacterName
+	Name       string
 	Sprite     *webgl.Sprite
 	Animations map[string]*animation.Animation
 	Properies  CharacterProperties
 }
 
-func NewCharacter(name CharacterName, sprite *webgl.Sprite, properies CharacterProperties) *Character {
+func NewCharacter(name string, sprite *webgl.Sprite, properies CharacterProperties) *Character {
 	return &Character{
 		Name:       name,
 		Sprite:     sprite,

@@ -4,14 +4,13 @@ package webgl
 
 import (
 	"syscall/js"
-	"webgl-app/internal/graphics/primitives"
 	"webgl-app/internal/jsfunc"
 )
 
 type Texture struct {
 	texture js.Value
-	width   int
-	height  int
+	Width   float64
+	Height  float64
 }
 
 func NewTexture(glCtx *GLContext, img js.Value) *Texture {
@@ -34,15 +33,11 @@ func NewTexture(glCtx *GLContext, img js.Value) *Texture {
 
 	return &Texture{
 		texture: tex,
-		width:   img.Get("width").Int(),
-		height:  img.Get("height").Int(),
+		Width:   img.Get("width").Float(),
+		Height:  img.Get("height").Float(),
 	}
 }
 
 func (t *Texture) GetTexture() *js.Value {
 	return &t.texture
-}
-
-func (t *Texture) Size() primitives.Vec2 {
-	return primitives.NewVec2(float64(t.width), float64(t.height))
 }

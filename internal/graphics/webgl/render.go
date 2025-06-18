@@ -26,9 +26,9 @@ func (ctx *GLContext) RenderSprite(sprite *Sprite, drawRect primitives.Rect, spe
 	}
 
 	if specular {
-		drawRect.Pos = drawRect.Move(sprite.SpecularOffset)
+		drawRect.Pos = drawRect.Move(*sprite.SpecularOffset)
 	} else {
-		drawRect.Pos = drawRect.Move(sprite.Offset)
+		drawRect.Pos = drawRect.Move(*sprite.Offset)
 	}
 
 	var (
@@ -50,11 +50,10 @@ func (ctx *GLContext) RenderSprite(sprite *Sprite, drawRect primitives.Rect, spe
 		u1, v1 = float32(0), float32(0)
 		u2, v2 = float32(1), float32(1)
 	} else {
-		texSize := sprite.Texture.Size()
-		u1 = float32(sprite.Rect.Left()) / float32(texSize.X)
-		v1 = float32(sprite.Rect.Top()) / float32(texSize.Y)
-		u2 = float32(sprite.Rect.Right()) / float32(texSize.X)
-		v2 = float32(sprite.Rect.Bottom()) / float32(texSize.Y)
+		u1 = float32(sprite.Rect.Left()) / float32(sprite.Texture.Width)
+		v1 = float32(sprite.Rect.Top()) / float32(sprite.Texture.Height)
+		u2 = float32(sprite.Rect.Right()) / float32(sprite.Texture.Width)
+		v2 = float32(sprite.Rect.Bottom()) / float32(sprite.Texture.Height)
 	}
 
 	if specular {

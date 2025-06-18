@@ -36,7 +36,7 @@ func (a *AssetsManager) Load(glCtx *webgl.GLContext, assetsConfig string) error 
 	)
 
 	var assetsSources AssetsSources
-	err := config.LoadSources("assets-manifest.json", &assetsSources)
+	err := config.LoadSources("assets/assets-manifest.json", &assetsSources)
 	if err != nil {
 		return err
 	}
