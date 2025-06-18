@@ -51,7 +51,8 @@ func connectWebSocket() {
 		socket.Call("close")
 	}
 
-	socket = js.Global().Get("WebSocket").New("ws://localhost:8080/ws")
+	wsURL := js.Global().Call("getWebSocketURL").String()
+	socket = js.Global().Get("WebSocket").New(wsURL)
 
 	socket.Set("onopen", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		jsfunc.LogInfo("WebSocket connected")
@@ -78,7 +79,7 @@ func connectWebSocket() {
 
 func createLobby(this js.Value, args []js.Value) interface{} {
 	var needPlayers int
-	if config.ProgramConf.Debug {
+	if config.ProgramConfig.Debug {
 		needPlayers = 1
 	} else {
 		needPlayers = 2

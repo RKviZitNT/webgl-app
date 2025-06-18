@@ -1,0 +1,13 @@
+{
+    "metadata": {
+        "warrior_meta": "assets/meta/warrior_meta.json"
+    },
+    "textures": {
+        "background1": "assets/sprites/backgrounds/background1.jpg",
+        "background2": "assets/sprites/backgrounds/background2.jpg",
+        "flags": "assets/sprites/ui/flags.png",
+        "health-bar": "assets/sprites/ui/health-bar.png",
+        "start": "assets/sprites/ui/start.png",
+        "warrior_spritesheet": "assets/sprites/characters/warrior/warrior_spritesheet.png"
+    }
+}

@@ -85,6 +85,11 @@ async function loadImage(path) {
     }
 }
 
+function getWebSocketURL() {
+    const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+    return protocol + window.location.host + '/ws';
+}
+
 async function init() {
     const go = new Go();
     const result = await WebAssembly.instantiateStreaming(

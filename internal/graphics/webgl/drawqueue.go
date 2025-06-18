@@ -100,7 +100,7 @@ func (ctx *GLContext) drawTextureQueue() {
 }
 
 func (ctx *GLContext) drawDebugQueue() {
-	if !config.ProgramConf.Debug {
+	if !config.ProgramConfig.Debug {
 		return
 	}
 

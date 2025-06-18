@@ -3,23 +3,28 @@
 package level
 
 import (
+	"fmt"
 	"webgl-app/internal/graphics/webgl"
 )
 
-type LevelName string
-
-const (
-	DefaultLevel LevelName = "default"
-)
-
 type Level struct {
-	Name       LevelName
-	Background *webgl.Sprite
+	Name       string
+	background *webgl.Sprite
 }
 
-func NewLevel(name LevelName, background *webgl.Sprite) *Level {
+func NewLevel(name string, tex *webgl.Texture) (*Level, error) {
+	if tex == nil {
+		return nil, fmt.Errorf("Texture is nil")
+	}
+
+	background := webgl.NewSprite(tex, nil, 1, nil, nil)
+
 	return &Level{
 		Name:       name,
-		Background: background,
-	}
+		background: background,
+	}, nil
+}
+
+func (l *Level) Draw(glCtx *webgl.GLContext) {
+	glCtx.RenderSprite(l.background, glCtx.Screen.BaseScreenRect, false)
 }

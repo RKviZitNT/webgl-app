@@ -29,6 +29,16 @@ func ParseInterfaceToJSON(msgData interface{}, output interface{}) error {
 	return json.Unmarshal(bytes, output)
 }
 
+func Clamp(value, min, max int) int {
+	if value < min {
+		return min
+	}
+	if value > max {
+		return max
+	}
+	return value
+}
+
 func ParseStringToJSON(data string, output interface{}) error {
 	bytes := []byte(data)
 	return json.Unmarshal(bytes, output)

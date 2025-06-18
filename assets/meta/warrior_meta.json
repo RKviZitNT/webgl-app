@@ -1,11 +1,13 @@
 {
     "parameters": {
-        "width": 414,
-        "height": 748,
-        "frame_width_count": 6,
-        "frame_height_count": 17,
-        "all_frame_count": 99
-    },    
+        "type": "animation-spritesheet",
+        "spritesheet_data": {
+            "spritesheet_texture": "warrior_spritesheet",
+            "frame_width_count": 6,
+            "frame_height_count": 17,
+            "all_frame_count": 99
+        }
+    },   
     "animations": {
         "idle": {
             "frame_time": 120,
@@ -18,7 +20,7 @@
             "frame_count": 8
         },
         "attack1": {
-            "frame_time": 80,
+            "frame_time": 90,
             "first_frame": 15,
             "frame_count": 8
         },
