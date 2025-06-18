@@ -8,8 +8,8 @@
 GO := go
 
 BUILD_DIR := build
-SERVER_DIR := $(BUILD_DIR)/server
-CLIENT_DIR := $(BUILD_DIR)/client
+SERVER_DIR := $(BUILD_DIR)
+CLIENT_DIR := $(BUILD_DIR)/static
 
 build: prepare-client build-client prepare-server build-server
 
@@ -61,23 +61,8 @@ build-mac-arm:
 
 run:
 	@echo "Starting server..."
-	@./$(SERVER_DIR)/server
+	@./$(SERVER_DIR)
 
 clean:
 	@echo "Cleaning build directory..."
 	@rm -rf $(BUILD_DIR)
-
-help:
-	@echo ""
-	@echo "Targets:"
-	@echo ""
-	@echo "  build                	- Build server for current OS and client"
-	@echo "  build-client         	- Build WebAssembly client only"
-	@echo "  build-server         	- Build server for current OS"
-	@echo "  build-linux 			- Build Linux x64 server"
-	@echo "  build-windows 			- Build Windows x64 server"
-	@echo ""
-	@echo "  run                  	- Run server for current OS"
-	@echo "  clean                	- Remove all build artifacts"
-	@echo "  help                 	- Show this help message"
-	@echo ""

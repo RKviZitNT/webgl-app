@@ -20,7 +20,7 @@ type Config struct {
 }
 
 var ProgramConfig = Config{
-	Debug: true,
+	Debug: false,
 	Window: Window{
 		Width:     1600,
 		Height:    900,

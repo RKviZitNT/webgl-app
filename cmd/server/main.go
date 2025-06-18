@@ -10,7 +10,7 @@ import (
 func main() {
 	ws := wshandler.NewWebSocket()
 
-	http.Handle("/", http.FileServer(http.Dir(filepath.Join("build", "client"))))
+	http.Handle("/", http.FileServer(http.Dir(filepath.Join("static"))))
 	http.HandleFunc("/ws", ws.WebSocketHandler)
 
 	log.Println("Server started at :8080")
